@@ -3,9 +3,12 @@ package com.vdone.ui.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vdone.data.db.TaskEntity
 import com.vdone.data.repository.TaskRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class TaskDetailUiState(
@@ -25,6 +28,14 @@ class TaskDetailViewModel(
     private val _uiState = MutableStateFlow(TaskDetailUiState(parentId = initialParentId))
     val uiState = _uiState.asStateFlow()
 
+    // Live subtask list — emits automatically when children are added/removed/changed
+    val subtasks = if (taskId != null) {
+        repository.getChildrenFlow(taskId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    } else {
+        MutableStateFlow(emptyList<TaskEntity>())
+    }
+
     init {
         if (taskId != null) {
             viewModelScope.launch {
@@ -43,6 +54,14 @@ class TaskDetailViewModel(
 
     fun setTitle(value: String) { _uiState.value = _uiState.value.copy(title = value) }
     fun setNotes(value: String) { _uiState.value = _uiState.value.copy(notes = value) }
+
+    fun toggleSubtaskStatus(subtask: TaskEntity) {
+        viewModelScope.launch { repository.toggleStatus(subtask) }
+    }
+
+    fun deleteSubtask(subtask: TaskEntity) {
+        viewModelScope.launch { repository.deleteTask(subtask) }
+    }
 
     fun save() {
         val state = _uiState.value

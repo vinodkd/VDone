@@ -3,6 +3,7 @@ package com.vdone.data.repository
 import com.vdone.data.db.TaskDao
 import com.vdone.data.db.TaskEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import java.util.UUID
 
 class TaskRepository(private val dao: TaskDao) {
@@ -12,6 +13,8 @@ class TaskRepository(private val dao: TaskDao) {
     suspend fun getTaskById(id: String): TaskEntity? = dao.getTaskById(id)
 
     suspend fun getChildren(parentId: String): List<TaskEntity> = dao.getChildren(parentId)
+
+    fun getChildrenFlow(parentId: String): Flow<List<TaskEntity>> = dao.getChildrenFlow(parentId)
 
     suspend fun createTask(title: String, notes: String?, parentId: String? = null) {
         val now = System.currentTimeMillis()

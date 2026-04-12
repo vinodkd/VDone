@@ -19,6 +19,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE parentId = :parentId ORDER BY createdAt ASC")
     suspend fun getChildren(parentId: String): List<TaskEntity>
 
+    @Query("SELECT * FROM tasks WHERE parentId = :parentId ORDER BY createdAt ASC")
+    fun getChildrenFlow(parentId: String): Flow<List<TaskEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(task: TaskEntity)
 

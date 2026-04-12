@@ -45,6 +45,7 @@ fun VDoneNavHost(repository: TaskRepository) {
                 viewModel = vm,
                 onBack = { navController.popBackStack() },
                 onAddSubtask = { pid -> navController.navigate("detail/$NEW-child-$pid") },
+                onEditSubtask = { id -> navController.navigate("detail/$id") },
                 taskId = taskId,
             )
         }
@@ -64,6 +65,7 @@ fun VDoneNavHost(repository: TaskRepository) {
                 viewModel = vm,
                 onBack = { navController.popBackStack() },
                 onAddSubtask = {},
+                onEditSubtask = { id -> navController.navigate("detail/$id") },
                 taskId = null,
             )
         }
