@@ -16,6 +16,7 @@ data class TaskDetailUiState(
     val notes: String = "",
     val isNew: Boolean = true,
     val parentId: String? = null,
+    val frequency: String? = null,   // null = no recurrence
     val isSaved: Boolean = false,
 )
 
@@ -46,6 +47,7 @@ class TaskDetailViewModel(
                         notes = task.notes ?: "",
                         isNew = false,
                         parentId = task.parentId,
+                        frequency = task.frequency,
                     )
                 }
             }
@@ -54,6 +56,7 @@ class TaskDetailViewModel(
 
     fun setTitle(value: String) { _uiState.value = _uiState.value.copy(title = value) }
     fun setNotes(value: String) { _uiState.value = _uiState.value.copy(notes = value) }
+    fun setFrequency(value: String?) { _uiState.value = _uiState.value.copy(frequency = value) }
 
     fun toggleSubtaskStatus(subtask: TaskEntity) {
         viewModelScope.launch { repository.toggleStatus(subtask) }
@@ -72,6 +75,8 @@ class TaskDetailViewModel(
                     title = state.title.trim(),
                     notes = state.notes.trim().ifBlank { null },
                     parentId = state.parentId,
+                    scheduleMode = if (state.frequency != null) "frequency" else "none",
+                    frequency = state.frequency,
                 )
             } else {
                 val existing = repository.getTaskById(taskId!!) ?: return@launch
@@ -79,6 +84,8 @@ class TaskDetailViewModel(
                     existing.copy(
                         title = state.title.trim(),
                         notes = state.notes.trim().ifBlank { null },
+                        scheduleMode = if (state.frequency != null) "frequency" else "none",
+                        frequency = state.frequency,
                     )
                 )
             }

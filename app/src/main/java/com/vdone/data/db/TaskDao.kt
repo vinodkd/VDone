@@ -33,4 +33,7 @@ interface TaskDao {
 
     @Query("DELETE FROM tasks WHERE parentId = :parentId")
     suspend fun deleteChildrenOf(parentId: String)
+
+    @Query("SELECT * FROM tasks WHERE scheduleMode = 'frequency' AND parentId IS NULL ORDER BY createdAt ASC")
+    fun getFrequencyTasks(): Flow<List<TaskEntity>>
 }

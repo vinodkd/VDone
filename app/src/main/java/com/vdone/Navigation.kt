@@ -1,15 +1,29 @@
 package com.vdone
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.vdone.data.repository.TaskRepository
 import com.vdone.ui.detail.TaskDetailScreen
 import com.vdone.ui.detail.TaskDetailViewModel
+import com.vdone.ui.home.HomeScreen
+import com.vdone.ui.home.HomeViewModel
 import com.vdone.ui.tasks.TaskListScreen
 import com.vdone.ui.tasks.TaskListViewModel
 
@@ -17,57 +31,96 @@ private const val NEW = "new"
 
 @Composable
 fun VDoneNavHost(repository: TaskRepository) {
-    val navController = rememberNavController()
+    val rootNav = rememberNavController()
+    val currentEntry by rootNav.currentBackStackEntryAsState()
+    val currentRoute = currentEntry?.destination?.route
 
-    NavHost(navController = navController, startDestination = "tasks") {
+    val showBottomBar = currentRoute == "home" || currentRoute == "tasks"
 
-        composable("tasks") {
-            val vm: TaskListViewModel = viewModel(factory = TaskListViewModel.Factory(repository))
-            TaskListScreen(
-                viewModel = vm,
-                onAddTask = { navController.navigate("detail/$NEW") },
-                onEditTask = { id -> navController.navigate("detail/$id") },
-            )
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = currentRoute == "home",
+                        onClick = {
+                            rootNav.navigate("home") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        },
+                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                        label = { Text("Next") },
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == "tasks",
+                        onClick = {
+                            rootNav.navigate("tasks") {
+                                popUpTo("home")
+                            }
+                        },
+                        icon = { Icon(Icons.Default.List, contentDescription = null) },
+                        label = { Text("All Tasks") },
+                    )
+                }
+            }
         }
+    ) { innerPadding ->
+        NavHost(
+            navController = rootNav,
+            startDestination = "home",
+            modifier = Modifier.padding(innerPadding),
+        ) {
+            composable("home") {
+                val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory(repository))
+                HomeScreen(viewModel = vm)
+            }
 
-        composable(
-            route = "detail/{taskId}",
-            arguments = listOf(
-                navArgument("taskId") { type = NavType.StringType },
-            ),
-        ) { backStackEntry ->
-            val rawId = backStackEntry.arguments!!.getString("taskId")!!
-            val taskId = if (rawId == NEW) null else rawId
-            val vm: TaskDetailViewModel = viewModel(
-                factory = TaskDetailViewModel.Factory(repository, taskId),
-            )
-            TaskDetailScreen(
-                viewModel = vm,
-                onBack = { navController.popBackStack() },
-                onAddSubtask = { pid -> navController.navigate("detail/$NEW-child-$pid") },
-                onEditSubtask = { id -> navController.navigate("detail/$id") },
-                taskId = taskId,
-            )
-        }
+            composable("tasks") {
+                val vm: TaskListViewModel = viewModel(factory = TaskListViewModel.Factory(repository))
+                TaskListScreen(
+                    viewModel = vm,
+                    onAddTask = { rootNav.navigate("detail/$NEW") },
+                    onEditTask = { id -> rootNav.navigate("detail/$id") },
+                )
+            }
 
-        composable(
-            route = "detail/{raw}-child-{parentId}",
-            arguments = listOf(
-                navArgument("raw") { type = NavType.StringType },
-                navArgument("parentId") { type = NavType.StringType },
-            ),
-        ) { backStackEntry ->
-            val parentId = backStackEntry.arguments!!.getString("parentId")!!
-            val vm: TaskDetailViewModel = viewModel(
-                factory = TaskDetailViewModel.Factory(repository, taskId = null, parentId = parentId),
-            )
-            TaskDetailScreen(
-                viewModel = vm,
-                onBack = { navController.popBackStack() },
-                onAddSubtask = {},
-                onEditSubtask = { id -> navController.navigate("detail/$id") },
-                taskId = null,
-            )
+            composable(
+                route = "detail/{taskId}",
+                arguments = listOf(navArgument("taskId") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val rawId = backStackEntry.arguments!!.getString("taskId")!!
+                val taskId = if (rawId == NEW) null else rawId
+                val vm: TaskDetailViewModel = viewModel(
+                    factory = TaskDetailViewModel.Factory(repository, taskId),
+                )
+                TaskDetailScreen(
+                    viewModel = vm,
+                    onBack = { rootNav.popBackStack() },
+                    onAddSubtask = { pid -> rootNav.navigate("detail/$NEW-child-$pid") },
+                    onEditSubtask = { id -> rootNav.navigate("detail/$id") },
+                    taskId = taskId,
+                )
+            }
+
+            composable(
+                route = "detail/{raw}-child-{parentId}",
+                arguments = listOf(
+                    navArgument("raw") { type = NavType.StringType },
+                    navArgument("parentId") { type = NavType.StringType },
+                ),
+            ) { backStackEntry ->
+                val parentId = backStackEntry.arguments!!.getString("parentId")!!
+                val vm: TaskDetailViewModel = viewModel(
+                    factory = TaskDetailViewModel.Factory(repository, taskId = null, parentId = parentId),
+                )
+                TaskDetailScreen(
+                    viewModel = vm,
+                    onBack = { rootNav.popBackStack() },
+                    onAddSubtask = {},
+                    onEditSubtask = { id -> rootNav.navigate("detail/$id") },
+                    taskId = null,
+                )
+            }
         }
     }
 }

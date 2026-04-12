@@ -1,7 +1,10 @@
 package com.vdone.ui.detail
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +23,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -108,6 +112,15 @@ fun TaskDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            // Only show frequency picker for root tasks (not subtasks)
+            if (uiState.parentId == null) {
+                Spacer(Modifier.height(16.dp))
+                FrequencyPicker(
+                    selected = uiState.frequency,
+                    onSelect = { viewModel.setFrequency(it) },
+                )
+            }
+
             // Show subtasks section whenever editing an existing task, at any depth
             if (!uiState.isNew && taskId != null) {
                 Spacer(Modifier.height(24.dp))
@@ -121,6 +134,32 @@ fun TaskDetailScreen(
             }
 
             Spacer(Modifier.height(80.dp))
+        }
+    }
+}
+
+private val FREQUENCIES = listOf("daily", "weekly", "monthly", "yearly")
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FrequencyPicker(selected: String?, onSelect: (String?) -> Unit) {
+    Column {
+        Text(
+            text = "Repeat",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FlowRow(
+            modifier = Modifier.padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FREQUENCIES.forEach { freq ->
+                FilterChip(
+                    selected = selected == freq,
+                    onClick = { onSelect(if (selected == freq) null else freq) },
+                    label = { Text(freq.replaceFirstChar { it.uppercase() }) },
+                )
+            }
         }
     }
 }
