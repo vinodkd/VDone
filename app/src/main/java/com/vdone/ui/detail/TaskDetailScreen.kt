@@ -7,6 +7,10 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,9 +26,18 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,7 +57,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.vdone.data.db.TaskEntity
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,12 +129,14 @@ fun TaskDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // Only show frequency picker for root tasks (not subtasks)
+            // Only show schedule for root tasks (not subtasks)
             if (uiState.parentId == null) {
                 Spacer(Modifier.height(16.dp))
-                FrequencyPicker(
-                    selected = uiState.frequency,
-                    onSelect = { viewModel.setFrequency(it) },
+                ScheduleSection(
+                    frequency = uiState.frequency,
+                    fixedStart = uiState.fixedStart,
+                    onSetFrequency = { viewModel.setFrequency(it) },
+                    onSetFixedStart = { viewModel.setFixedStart(it) },
                 )
             }
 
@@ -139,26 +158,147 @@ fun TaskDetailScreen(
 }
 
 private val FREQUENCIES = listOf("daily", "weekly", "monthly", "yearly")
+private val DATE_FMT = SimpleDateFormat("EEE, MMM d yyyy  HH:mm", Locale.getDefault())
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun FrequencyPicker(selected: String?, onSelect: (String?) -> Unit) {
+private fun ScheduleSection(
+    frequency: String?,
+    fixedStart: Long?,
+    onSetFrequency: (String?) -> Unit,
+    onSetFixedStart: (Long?) -> Unit,
+) {
+    // 0 = none, 1 = recurring, 2 = fixed date
+    val mode = when {
+        frequency != null -> 1
+        fixedStart != null -> 2
+        else -> 0
+    }
+
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    var pendingDateMs by remember { mutableStateOf(0L) }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = fixedStart ?: System.currentTimeMillis()
+    )
+    val cal = remember { Calendar.getInstance() }.apply {
+        timeInMillis = fixedStart ?: System.currentTimeMillis()
+    }
+    val timePickerState = rememberTimePickerState(
+        initialHour = cal.get(Calendar.HOUR_OF_DAY),
+        initialMinute = cal.get(Calendar.MINUTE),
+    )
+
     Column {
         Text(
-            text = "Repeat",
+            text = "Schedule",
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        FlowRow(
-            modifier = Modifier.padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FREQUENCIES.forEach { freq ->
-                FilterChip(
-                    selected = selected == freq,
-                    onClick = { onSelect(if (selected == freq) null else freq) },
-                    label = { Text(freq.replaceFirstChar { it.uppercase() }) },
+        SingleChoiceSegmentedButtonRow(modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)) {
+            listOf("None", "Recurring", "On date").forEachIndexed { index, label ->
+                SegmentedButton(
+                    selected = mode == index,
+                    onClick = {
+                        when (index) {
+                            0 -> { onSetFrequency(null); onSetFixedStart(null) }
+                            1 -> onSetFrequency(frequency ?: "daily")
+                            2 -> { onSetFrequency(null); showDatePicker = true }
+                        }
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index, 3),
+                    label = { Text(label) },
                 )
+            }
+        }
+
+        if (mode == 1) {
+            FlowRow(
+                modifier = Modifier.padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FREQUENCIES.forEach { freq ->
+                    FilterChip(
+                        selected = frequency == freq,
+                        onClick = { onSetFrequency(if (frequency == freq) "daily" else freq) },
+                        label = { Text(freq.replaceFirstChar { it.uppercase() }) },
+                    )
+                }
+            }
+        }
+
+        if (mode == 2 && fixedStart != null) {
+            OutlinedButton(
+                onClick = { showDatePicker = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+            ) {
+                Text(DATE_FMT.format(fixedStart))
+            }
+        }
+    }
+
+    // Date picker dialog
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showDatePicker = false
+                    pendingDateMs = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                    showTimePicker = true
+                }) { Text("Next") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Time picker dialog
+    if (showTimePicker) {
+        Dialog(onDismissRequest = { showTimePicker = false }) {
+            androidx.compose.material3.Surface(
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        "Pick time",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 16.dp),
+                    )
+                    TimePicker(state = timePickerState)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        androidx.compose.material3.TextButton(onClick = { showTimePicker = false }) {
+                            Text("Cancel")
+                        }
+                        androidx.compose.material3.TextButton(onClick = {
+                            showTimePicker = false
+                            val c = Calendar.getInstance().apply {
+                                timeInMillis = pendingDateMs
+                                set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                                set(Calendar.MINUTE, timePickerState.minute)
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }
+                            onSetFixedStart(c.timeInMillis)
+                        }) { Text("OK") }
+                    }
+                }
             }
         }
     }

@@ -11,6 +11,8 @@ class TaskRepository(private val dao: TaskDao) {
 
     fun getFrequencyTasks(): Flow<List<TaskEntity>> = dao.getFrequencyTasks()
 
+    fun getFixedTasks(): Flow<List<TaskEntity>> = dao.getFixedTasks()
+
     suspend fun getTaskById(id: String): TaskEntity? = dao.getTaskById(id)
 
     suspend fun getChildren(parentId: String): List<TaskEntity> = dao.getChildren(parentId)
@@ -23,6 +25,7 @@ class TaskRepository(private val dao: TaskDao) {
         parentId: String? = null,
         scheduleMode: String = "none",
         frequency: String? = null,
+        fixedStart: Long? = null,
     ) {
         val now = System.currentTimeMillis()
         dao.insert(
@@ -34,6 +37,7 @@ class TaskRepository(private val dao: TaskDao) {
                 parentId = parentId,
                 scheduleMode = scheduleMode,
                 frequency = frequency,
+                fixedStart = fixedStart,
                 lastCompletedAt = null,
                 createdAt = now,
                 updatedAt = now,

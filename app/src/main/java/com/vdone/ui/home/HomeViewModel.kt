@@ -16,14 +16,29 @@ class HomeViewModel(private val repository: TaskRepository) : ViewModel() {
 
     private val refreshTick = MutableStateFlow(0)
 
-    val dueTasks = combine(repository.getFrequencyTasks(), refreshTick) { tasks, _ ->
-        tasks.filter { FrequencyChecker.isDueToday(it) }
+    val dueTasks = combine(
+        repository.getFrequencyTasks(),
+        repository.getFixedTasks(),
+        refreshTick,
+    ) { freqTasks, fixedTasks, _ ->
+        val now = System.currentTimeMillis()
+        val dueFreq = freqTasks.filter { FrequencyChecker.isDueToday(it) }
+        val dueFixed = fixedTasks.filter { it.fixedStart != null && it.fixedStart <= now }
+        (dueFreq + dueFixed).sortedWith(
+            compareBy(nullsLast()) { it.fixedStart }
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun refresh() { refreshTick.value++ }
 
     fun complete(task: TaskEntity) {
-        viewModelScope.launch { repository.completeFrequencyTask(task) }
+        viewModelScope.launch {
+            if (task.scheduleMode == "frequency") {
+                repository.completeFrequencyTask(task)
+            } else {
+                repository.toggleStatus(task)
+            }
+        }
     }
 
     class Factory(private val repository: TaskRepository) : ViewModelProvider.Factory {
