@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.vdone.AppSettings
 import com.vdone.VDoneApp
 import com.vdone.ui.theme.VDoneTheme
 import kotlinx.coroutines.launch
@@ -91,11 +92,13 @@ class ReminderActivity : ComponentActivity() {
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 OutlinedButton(onClick = {
-                                    val snoozeAt = System.currentTimeMillis() + SNOOZE_MS
+                                    val snoozeMinutes = AppSettings.getSnoozeMinutes(this@ReminderActivity)
+                                    val snoozeAt = System.currentTimeMillis() + snoozeMinutes * 60_000L
                                     AlarmScheduler.scheduleAt(this@ReminderActivity, taskId, taskTitle, snoozeAt)
                                     finish()
                                 }) {
-                                    Text("Snooze 10 min")
+                                    val snoozeMinutes = AppSettings.getSnoozeMinutes(this@ReminderActivity)
+                                    Text("Snooze ${snoozeMinutes}m")
                                 }
                                 Button(onClick = {
                                     lifecycleScope.launch {
@@ -114,7 +117,4 @@ class ReminderActivity : ComponentActivity() {
         }
     }
 
-    companion object {
-        private const val SNOOZE_MS = 10 * 60 * 1000L
-    }
 }

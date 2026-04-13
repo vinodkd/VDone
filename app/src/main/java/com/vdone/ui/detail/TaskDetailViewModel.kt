@@ -131,8 +131,23 @@ class TaskDetailViewModel(
         _uiState.value = _uiState.value.copy(pendingConditions = updated)
     }
 
+    fun editPendingCondition(id: String, newType: String, newRefTaskId: String?) {
+        val updated = _uiState.value.pendingConditions.map { pending ->
+            if (pending.id == id) pending.copy(type = newType, refTaskId = newRefTaskId) else pending
+        }
+        _uiState.value = _uiState.value.copy(pendingConditions = updated)
+    }
+
     fun deleteSavedCondition(conditionId: String) {
         viewModelScope.launch { conditionRepository.deleteCondition(conditionId) }
+    }
+
+    fun editSavedCondition(conditionId: String, newType: String, newRefTaskId: String?) {
+        val targetTaskId = taskId ?: return
+        viewModelScope.launch {
+            conditionRepository.deleteCondition(conditionId)
+            conditionRepository.addCondition(targetTaskId, newType, newRefTaskId)
+        }
     }
 
     fun toggleSubtaskStatus(subtask: TaskEntity) {

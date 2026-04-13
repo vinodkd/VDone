@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import java.util.Calendar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,17 +39,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 
+private fun isToday(timestampMs: Long?): Boolean {
+    if (timestampMs == null) return false
+    val ref = Calendar.getInstance().apply { timeInMillis = timestampMs }
+    val today = Calendar.getInstance()
+    return ref.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+        ref.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(
     viewModel: TaskListViewModel,
     onAddTask: () -> Unit,
     onEditTask: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
 ) {
     val nodes by viewModel.taskNodesWithRefresh.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Tasks") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Tasks") },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddTask) {
                 Icon(Icons.Default.Add, contentDescription = "Add task")
@@ -108,6 +128,7 @@ private fun TaskCard(
 ) {
     val task = node.task
     val done = task.status == "done"
+    val doneToday = task.scheduleMode == "frequency" && isToday(task.lastCompletedAt)
     val indentDp = (node.depth * 20).dp
 
     Card(
@@ -116,10 +137,12 @@ private fun TaskCard(
             .padding(start = indentDp)
             .clickable(onClick = onEdit),
         colors = CardDefaults.cardColors(
-            containerColor = if (done) MaterialTheme.colorScheme.surfaceVariant
-            else MaterialTheme.colorScheme.surface
+            containerColor = when {
+                done || doneToday -> MaterialTheme.colorScheme.surfaceVariant
+                else -> MaterialTheme.colorScheme.surface
+            }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (done) 0.dp else 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (done || doneToday) 0.dp else 2.dp),
     ) {
         Row(
             modifier = Modifier
@@ -142,9 +165,10 @@ private fun TaskCard(
 
             IconButton(onClick = onToggle, modifier = Modifier.size(40.dp)) {
                 Icon(
-                    imageVector = if (done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
-                    contentDescription = if (done) "Mark todo" else "Mark done",
-                    tint = if (done) MaterialTheme.colorScheme.primary
+                    imageVector = if (done || doneToday) Icons.Filled.CheckCircle
+                    else Icons.Filled.RadioButtonUnchecked,
+                    contentDescription = if (done || doneToday) "Mark todo" else "Mark done",
+                    tint = if (done || doneToday) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -157,10 +181,17 @@ private fun TaskCard(
                 Text(
                     text = task.title,
                     style = MaterialTheme.typography.bodyLarge,
-                    textDecoration = if (done) TextDecoration.LineThrough else null,
-                    color = if (done) MaterialTheme.colorScheme.onSurfaceVariant
+                    textDecoration = if (done || doneToday) TextDecoration.LineThrough else null,
+                    color = if (done || doneToday) MaterialTheme.colorScheme.onSurfaceVariant
                     else MaterialTheme.colorScheme.onSurface,
                 )
+                if (doneToday) {
+                    Text(
+                        "Done today",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
                 if (!task.notes.isNullOrBlank()) {
                     Text(
                         text = task.notes,

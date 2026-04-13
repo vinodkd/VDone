@@ -12,11 +12,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,7 +37,11 @@ import com.vdone.data.db.TaskEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, onEditTask: (String) -> Unit) {
+fun HomeScreen(
+    viewModel: HomeViewModel,
+    onEditTask: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+) {
     val dueTasks by viewModel.dueTasks.collectAsState()
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -48,7 +54,16 @@ fun HomeScreen(viewModel: HomeViewModel, onEditTask: (String) -> Unit) {
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Next Tasks") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Next Tasks") },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                },
+            )
+        },
     ) { padding ->
         if (dueTasks.isEmpty()) {
             Column(
@@ -91,11 +106,17 @@ fun HomeScreen(viewModel: HomeViewModel, onEditTask: (String) -> Unit) {
 
 @Composable
 private fun DueTaskCard(task: TaskEntity, onDone: () -> Unit, onEdit: () -> Unit) {
+    val now = System.currentTimeMillis()
+    val isOverdue = task.fixedStart != null && task.fixedStart < now
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onEdit),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isOverdue) MaterialTheme.colorScheme.errorContainer
+            else MaterialTheme.colorScheme.surface
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
@@ -105,22 +126,37 @@ private fun DueTaskCard(task: TaskEntity, onDone: () -> Unit, onEdit: () -> Unit
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(task.title, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    task.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (isOverdue) MaterialTheme.colorScheme.onErrorContainer
+                    else MaterialTheme.colorScheme.onSurface,
+                )
                 if (!task.notes.isNullOrBlank()) {
                     Text(
                         task.notes,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (isOverdue) MaterialTheme.colorScheme.onErrorContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
                         modifier = Modifier.padding(top = 2.dp),
                     )
                 }
-                Text(
-                    text = task.frequency?.replaceFirstChar { it.uppercase() } ?: "",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
+                if (isOverdue) {
+                    Text(
+                        "Overdue",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                } else {
+                    Text(
+                        text = task.frequency?.replaceFirstChar { it.uppercase() } ?: "",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
             }
             Button(
                 onClick = onDone,

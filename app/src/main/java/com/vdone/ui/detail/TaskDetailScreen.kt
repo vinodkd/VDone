@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
@@ -155,6 +156,8 @@ fun TaskDetailScreen(
                     onAddCondition = { type, refTaskId -> viewModel.addCondition(type, refTaskId) },
                     onDeleteSavedCondition = { viewModel.deleteSavedCondition(it) },
                     onDeletePendingCondition = { viewModel.deletePendingCondition(it) },
+                    onEditSavedCondition = { id, type, refTaskId -> viewModel.editSavedCondition(id, type, refTaskId) },
+                    onEditPendingCondition = { id, type, refTaskId -> viewModel.editPendingCondition(id, type, refTaskId) },
                 )
             }
 
@@ -208,6 +211,8 @@ private fun ScheduleSection(
     onAddCondition: (type: String, refTaskId: String?) -> Unit,
     onDeleteSavedCondition: (String) -> Unit,
     onDeletePendingCondition: (String) -> Unit,
+    onEditSavedCondition: (id: String, type: String, refTaskId: String?) -> Unit,
+    onEditPendingCondition: (id: String, type: String, refTaskId: String?) -> Unit,
 ) {
     val modeIndex = when (scheduleMode) {
         "frequency" -> 1
@@ -320,6 +325,8 @@ private fun ScheduleSection(
                 onAdd = onAddCondition,
                 onDeleteSaved = onDeleteSavedCondition,
                 onDeletePending = onDeletePendingCondition,
+                onEditSaved = onEditSavedCondition,
+                onEditPending = onEditPendingCondition,
             )
         }
     }
@@ -428,8 +435,12 @@ private fun ConditionSection(
     onAdd: (type: String, refTaskId: String?) -> Unit,
     onDeleteSaved: (String) -> Unit,
     onDeletePending: (String) -> Unit,
+    onEditSaved: (id: String, type: String, refTaskId: String?) -> Unit,
+    onEditPending: (id: String, type: String, refTaskId: String?) -> Unit,
 ) {
-    var showDialog by remember { mutableStateOf(false) }
+    var showAddDialog by remember { mutableStateOf(false) }
+    // editTarget: Pair(id, isForSavedCondition) when editing an existing condition
+    var editTarget by remember { mutableStateOf<Triple<String, String, String?>?>(null) }
     val hasAny = savedConditions.isNotEmpty() || pendingConditions.isNotEmpty()
 
     Column(modifier = Modifier.padding(top = 8.dp)) {
@@ -445,13 +456,18 @@ private fun ConditionSection(
                 ListItem(
                     headlineContent = { Text(condition.label(allTasks)) },
                     trailingContent = {
-                        IconButton(onClick = { onDeleteSaved(condition.id) }) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Remove condition",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(18.dp),
-                            )
+                        Row {
+                            IconButton(onClick = {
+                                editTarget = Triple(condition.id, condition.type, condition.refTaskId)
+                            }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit condition",
+                                    modifier = Modifier.size(18.dp))
+                            }
+                            IconButton(onClick = { onDeleteSaved(condition.id) }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Remove condition",
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(18.dp))
+                            }
                         }
                     },
                 )
@@ -461,32 +477,52 @@ private fun ConditionSection(
                 ListItem(
                     headlineContent = { Text(pending.label(allTasks)) },
                     trailingContent = {
-                        IconButton(onClick = { onDeletePending(pending.id) }) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Remove condition",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(18.dp),
-                            )
+                        Row {
+                            IconButton(onClick = {
+                                editTarget = Triple(pending.id, pending.type, pending.refTaskId)
+                            }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit condition",
+                                    modifier = Modifier.size(18.dp))
+                            }
+                            IconButton(onClick = { onDeletePending(pending.id) }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Remove condition",
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(18.dp))
+                            }
                         }
                     },
                 )
                 HorizontalDivider()
             }
         }
-        TextButton(onClick = { showDialog = true }) {
+        TextButton(onClick = { showAddDialog = true }) {
             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
             Text("Add condition")
         }
     }
 
-    if (showDialog) {
+    if (showAddDialog) {
         AddConditionDialog(
             allTasks = allTasks,
-            onDismiss = { showDialog = false },
+            onDismiss = { showAddDialog = false },
             onConfirm = { type, refTaskId ->
                 onAdd(type, refTaskId)
-                showDialog = false
+                showAddDialog = false
+            },
+        )
+    }
+
+    editTarget?.let { (id, currentType, currentRefTaskId) ->
+        val isSaved = savedConditions.any { it.id == id }
+        AddConditionDialog(
+            allTasks = allTasks,
+            initialType = currentType,
+            initialRefTaskId = currentRefTaskId,
+            onDismiss = { editTarget = null },
+            onConfirm = { type, refTaskId ->
+                if (isSaved) onEditSaved(id, type, refTaskId)
+                else onEditPending(id, type, refTaskId)
+                editTarget = null
             },
         )
     }
@@ -514,13 +550,18 @@ private fun PendingCondition.label(tasks: List<TaskEntity>): String {
 @Composable
 private fun AddConditionDialog(
     allTasks: List<TaskEntity>,
+    initialType: String? = null,
+    initialRefTaskId: String? = null,
     onDismiss: () -> Unit,
     onConfirm: (type: String, refTaskId: String?) -> Unit,
 ) {
-    // "After task done" or "Before task time" — both require picking a task
     val conditionTypes = listOf("After task done" to "after_task_done", "Before task time" to "before_task_time")
-    var selectedType by remember { mutableStateOf(conditionTypes[0]) }
-    var selectedTask by remember { mutableStateOf(allTasks.firstOrNull()) }
+    var selectedType by remember {
+        mutableStateOf(conditionTypes.firstOrNull { it.second == initialType } ?: conditionTypes[0])
+    }
+    var selectedTask by remember {
+        mutableStateOf(allTasks.firstOrNull { it.id == initialRefTaskId } ?: allTasks.firstOrNull())
+    }
     var typeExpanded by remember { mutableStateOf(false) }
     var taskExpanded by remember { mutableStateOf(false) }
 

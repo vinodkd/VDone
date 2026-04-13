@@ -25,6 +25,7 @@ import com.vdone.ui.detail.TaskDetailScreen
 import com.vdone.ui.detail.TaskDetailViewModel
 import com.vdone.ui.home.HomeScreen
 import com.vdone.ui.home.HomeViewModel
+import com.vdone.ui.settings.SettingsScreen
 import com.vdone.ui.tasks.TaskListScreen
 import com.vdone.ui.tasks.TaskListViewModel
 
@@ -78,6 +79,7 @@ fun VDoneNavHost(repository: TaskRepository, conditionRepository: ConditionRepos
                 HomeScreen(
                     viewModel = vm,
                     onEditTask = { id -> rootNav.navigate("detail/$id") },
+                    onNavigateToSettings = { rootNav.navigate("settings") },
                 )
             }
 
@@ -87,7 +89,12 @@ fun VDoneNavHost(repository: TaskRepository, conditionRepository: ConditionRepos
                     viewModel = vm,
                     onAddTask = { rootNav.navigate("detail/$NEW") },
                     onEditTask = { id -> rootNav.navigate("detail/$id") },
+                    onNavigateToSettings = { rootNav.navigate("settings") },
                 )
+            }
+
+            composable("settings") {
+                SettingsScreen(onBack = { rootNav.popBackStack() })
             }
 
             composable(

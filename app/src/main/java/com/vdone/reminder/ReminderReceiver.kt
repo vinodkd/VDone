@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import com.vdone.AppSettings
 import com.vdone.MainActivity
 import com.vdone.VDoneApp
 
@@ -13,6 +14,9 @@ class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val taskId = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_ID) ?: return
         val taskTitle = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_TITLE) ?: "Task due"
+
+        // In show mode all alarms are silently suppressed
+        if (AppSettings.isShowMode(context)) return
 
         // Tap on notification → open main app
         val openIntent = PendingIntent.getActivity(
