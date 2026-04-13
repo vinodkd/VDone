@@ -5,10 +5,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vdone.data.db.TaskEntity
 import com.vdone.data.repository.TaskRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+enum class FilterMode { ALL, TODO, DONE }
+enum class SortMode  { CREATED, TITLE, DUE }
 
 data class TaskNode(
     val task: TaskEntity,
@@ -21,13 +25,43 @@ data class TaskNode(
 class TaskListViewModel(private val repository: TaskRepository) : ViewModel() {
 
     private val expandedIds = mutableSetOf<String>()
+    private val _refreshTick = MutableStateFlow(0)
 
-    val taskNodes = repository.getAllTasks()
-        .map { buildTree(it) }
+    val filterMode = MutableStateFlow(FilterMode.ALL)
+    val sortMode   = MutableStateFlow(SortMode.CREATED)
+
+    val taskNodesWithRefresh = combine(
+        repository.getAllTasks(),
+        _refreshTick,
+        filterMode,
+        sortMode,
+    ) { all, _, filter, sort -> buildTree(all, filter, sort) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private fun buildTree(all: List<TaskEntity>): List<TaskNode> {
+    private fun buildTree(
+        all: List<TaskEntity>,
+        filter: FilterMode,
+        sort: SortMode,
+    ): List<TaskNode> {
         val byParent = all.groupBy { it.parentId }
+
+        // Apply filter to root tasks; children always follow their parent
+        val roots = (byParent[null] ?: emptyList()).filter { task ->
+            when (filter) {
+                FilterMode.ALL  -> true
+                FilterMode.TODO -> task.status != "done"
+                FilterMode.DONE -> task.status == "done"
+            }
+        }.sortedWith(compareBy { task ->
+            when (sort) {
+                SortMode.CREATED -> task.createdAt
+                SortMode.TITLE   -> 0L  // handled below via thenBy
+                SortMode.DUE     -> task.fixedStart ?: Long.MAX_VALUE
+            }
+        }).let { list ->
+            if (sort == SortMode.TITLE) list.sortedBy { it.title.lowercase() } else list
+        }
+
         val result = mutableListOf<TaskNode>()
 
         fun visit(task: TaskEntity, depth: Int) {
@@ -35,26 +69,17 @@ class TaskListViewModel(private val repository: TaskRepository) : ViewModel() {
             val doneChildren = children.count { it.status == "done" }
             val expanded = task.id in expandedIds
             result.add(TaskNode(task, depth, children.size, doneChildren, expanded))
-            if (expanded) children.forEach { visit(it, depth + 1) }
+            if (expanded) children.sortedBy { it.createdAt }.forEach { visit(it, depth + 1) }
         }
 
-        byParent[null]?.forEach { visit(it, 0) }
+        roots.forEach { visit(it, 0) }
         return result
     }
 
     fun toggleExpanded(taskId: String) {
         if (taskId in expandedIds) expandedIds.remove(taskId) else expandedIds.add(taskId)
-        // trigger recompute by forcing a re-emit — easiest via a dedicated state flag
         _refreshTick.value = _refreshTick.value + 1
     }
-
-    private val _refreshTick = kotlinx.coroutines.flow.MutableStateFlow(0)
-
-    val taskNodesWithRefresh = kotlinx.coroutines.flow.combine(
-        repository.getAllTasks(),
-        _refreshTick,
-    ) { all, _ -> buildTree(all) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun toggleStatus(task: TaskEntity) {
         viewModelScope.launch { repository.toggleStatus(task) }

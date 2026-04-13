@@ -95,6 +95,9 @@ class ReminderActivity : ComponentActivity() {
                                     val snoozeMinutes = AppSettings.getSnoozeMinutes(this@ReminderActivity)
                                     val snoozeAt = System.currentTimeMillis() + snoozeMinutes * 60_000L
                                     AlarmScheduler.scheduleAt(this@ReminderActivity, taskId, taskTitle, snoozeAt)
+                                    lifecycleScope.launch {
+                                        repository.setSnooze(taskId, snoozeAt)
+                                    }
                                     finish()
                                 }) {
                                     val snoozeMinutes = AppSettings.getSnoozeMinutes(this@ReminderActivity)

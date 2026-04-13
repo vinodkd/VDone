@@ -16,6 +16,7 @@ data class TaskEntity(
     val fixedStart: Long?,        // unix ms; used when scheduleMode = "fixed"
     val lastCompletedAt: Long?,   // unix ms; null if never completed
     val lastRemindedAt: Long?,    // unix ms; set each time a reminder fires
+    val snoozedUntil: Long?,      // unix ms; non-null while alarm is snoozed
     val waitingOn: String?,       // free text; non-null means this task is an open loop
     val followUpAt: Long?,        // unix ms; when to send a follow-up nudge
     val createdAt: Long,

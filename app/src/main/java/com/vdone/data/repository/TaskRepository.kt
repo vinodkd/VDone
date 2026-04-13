@@ -65,6 +65,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
             fixedStart = fixedStart,
             lastCompletedAt = null,
             lastRemindedAt = null,
+            snoozedUntil = null,
             waitingOn = waitingOn,
             followUpAt = followUpAt,
             createdAt = now,
@@ -103,7 +104,13 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
 
     suspend fun updateLastRemindedAt(taskId: String, remindedAt: Long) {
         val task = dao.getTaskById(taskId) ?: return
-        dao.update(task.copy(lastRemindedAt = remindedAt, updatedAt = System.currentTimeMillis()))
+        // Clear snoozedUntil when the alarm actually fires
+        dao.update(task.copy(lastRemindedAt = remindedAt, snoozedUntil = null, updatedAt = System.currentTimeMillis()))
+    }
+
+    suspend fun setSnooze(taskId: String, until: Long) {
+        val task = dao.getTaskById(taskId) ?: return
+        dao.update(task.copy(snoozedUntil = until, updatedAt = System.currentTimeMillis()))
     }
 
     suspend fun clearWaiting(task: TaskEntity) {

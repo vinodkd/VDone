@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -20,9 +21,13 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,10 +35,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
@@ -47,6 +58,17 @@ private fun isToday(timestampMs: Long?): Boolean {
         ref.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
 }
 
+private fun formatSnoozeTime(ms: Long): String {
+    val now = System.currentTimeMillis()
+    return if (isToday(ms)) {
+        "Snoozed until " + SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(ms))
+    } else {
+        val diff = ms - now
+        val mins = (diff / 60_000).toInt()
+        "Snoozed ${mins}m"
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(
@@ -56,12 +78,46 @@ fun TaskListScreen(
     onNavigateToSettings: () -> Unit,
 ) {
     val nodes by viewModel.taskNodesWithRefresh.collectAsState()
+    val filterMode by viewModel.filterMode.collectAsState()
+    val sortMode by viewModel.sortMode.collectAsState()
+    var showSortMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Tasks") },
                 actions = {
+                    Box {
+                        IconButton(onClick = { showSortMenu = true }) {
+                            Icon(Icons.Default.Sort, contentDescription = "Sort")
+                        }
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("By date created") },
+                                onClick = { viewModel.sortMode.value = SortMode.CREATED; showSortMenu = false },
+                                trailingIcon = if (sortMode == SortMode.CREATED) ({
+                                    Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(16.dp))
+                                }) else null,
+                            )
+                            DropdownMenuItem(
+                                text = { Text("By title") },
+                                onClick = { viewModel.sortMode.value = SortMode.TITLE; showSortMenu = false },
+                                trailingIcon = if (sortMode == SortMode.TITLE) ({
+                                    Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(16.dp))
+                                }) else null,
+                            )
+                            DropdownMenuItem(
+                                text = { Text("By due date") },
+                                onClick = { viewModel.sortMode.value = SortMode.DUE; showSortMenu = false },
+                                trailingIcon = if (sortMode == SortMode.DUE) ({
+                                    Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(16.dp))
+                                }) else null,
+                            )
+                        }
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
@@ -74,45 +130,80 @@ fun TaskListScreen(
             }
         }
     ) { padding ->
-        if (nodes.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
+            // Filter chips
+            LazyRow(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(
-                    "No tasks yet.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    "Tap + to add one.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                item { }
-                items(nodes, key = { it.task.id }) { node ->
-                    TaskCard(
-                        node = node,
-                        onToggle = { viewModel.toggleStatus(node.task) },
-                        onEdit = { onEditTask(node.task.id) },
-                        onDelete = { viewModel.deleteTask(node.task) },
-                        onToggleExpand = { viewModel.toggleExpanded(node.task.id) },
+                item {
+                    FilterChip(
+                        selected = filterMode == FilterMode.ALL,
+                        onClick = { viewModel.filterMode.value = FilterMode.ALL },
+                        label = { Text("All") },
                     )
                 }
-                item { }
+                item {
+                    FilterChip(
+                        selected = filterMode == FilterMode.TODO,
+                        onClick = { viewModel.filterMode.value = FilterMode.TODO },
+                        label = { Text("Todo") },
+                    )
+                }
+                item {
+                    FilterChip(
+                        selected = filterMode == FilterMode.DONE,
+                        onClick = { viewModel.filterMode.value = FilterMode.DONE },
+                        label = { Text("Done") },
+                    )
+                }
+            }
+
+            if (nodes.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            if (filterMode == FilterMode.ALL) "No tasks yet." else "Nothing here.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        if (filterMode == FilterMode.ALL) {
+                            Text(
+                                "Tap + to add one.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    item { }
+                    items(nodes, key = { it.task.id }) { node ->
+                        TaskCard(
+                            node = node,
+                            onToggle = { viewModel.toggleStatus(node.task) },
+                            onEdit = { onEditTask(node.task.id) },
+                            onDelete = { viewModel.deleteTask(node.task) },
+                            onToggleExpand = { viewModel.toggleExpanded(node.task.id) },
+                        )
+                    }
+                    item { }
+                }
             }
         }
     }
@@ -129,6 +220,8 @@ private fun TaskCard(
     val task = node.task
     val done = task.status == "done"
     val doneToday = task.scheduleMode == "frequency" && isToday(task.lastCompletedAt)
+    val now = System.currentTimeMillis()
+    val isSnoozed = task.snoozedUntil != null && task.snoozedUntil > now
     val indentDp = (node.depth * 20).dp
 
     Card(
@@ -190,6 +283,13 @@ private fun TaskCard(
                         "Done today",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                if (isSnoozed) {
+                    Text(
+                        formatSnoozeTime(task.snoozedUntil!!),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary,
                     )
                 }
                 if (!task.notes.isNullOrBlank()) {
