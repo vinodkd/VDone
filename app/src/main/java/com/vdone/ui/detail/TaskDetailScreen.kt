@@ -181,6 +181,15 @@ fun TaskDetailScreen(
                 )
             }
 
+            if (uiState.lastRemindedAt != null) {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "Last reminded: ${DATE_FMT.format(uiState.lastRemindedAt)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
             Spacer(Modifier.height(80.dp))
         }
     }

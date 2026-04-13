@@ -22,4 +22,16 @@ object AppSettings {
 
     fun setShowMode(context: Context, enabled: Boolean) =
         prefs(context).edit().putBoolean(KEY_SHOW_MODE, enabled).apply()
+
+    fun isReminderSound(context: Context): Boolean =
+        prefs(context).getBoolean("reminder_sound", true)
+
+    fun setReminderSound(context: Context, enabled: Boolean) =
+        prefs(context).edit().putBoolean("reminder_sound", enabled).apply()
+
+    fun isReminderVibrate(context: Context): Boolean =
+        prefs(context).getBoolean("reminder_vibrate", true)
+
+    fun setReminderVibrate(context: Context, enabled: Boolean) =
+        prefs(context).edit().putBoolean("reminder_vibrate", enabled).apply()
 }

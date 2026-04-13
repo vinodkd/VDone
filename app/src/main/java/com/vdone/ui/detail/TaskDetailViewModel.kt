@@ -33,6 +33,7 @@ data class TaskDetailUiState(
     val pendingConditions: List<PendingCondition> = emptyList(),
     val waitingOn: String = "",
     val followUpAt: Long? = null,
+    val lastRemindedAt: Long? = null,
     val isSaved: Boolean = false,
 )
 
@@ -80,6 +81,7 @@ class TaskDetailViewModel(
                         fixedStart = task.fixedStart,
                         waitingOn = task.waitingOn ?: "",
                         followUpAt = task.followUpAt,
+                        lastRemindedAt = task.lastRemindedAt,
                     )
                 }
             }

@@ -38,6 +38,8 @@ private val SNOOZE_OPTIONS = listOf(5, 10, 15, 30)
 fun SettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     var snoozeMinutes by remember { mutableStateOf(AppSettings.getSnoozeMinutes(context)) }
+    var reminderSound by remember { mutableStateOf(AppSettings.isReminderSound(context)) }
+    var reminderVibrate by remember { mutableStateOf(AppSettings.isReminderVibrate(context)) }
     var showMode by remember { mutableStateOf(AppSettings.isShowMode(context)) }
 
     Scaffold(
@@ -75,6 +77,42 @@ fun SettingsScreen(onBack: () -> Unit) {
                             label = { Text("${minutes}m") },
                         )
                     }
+                }
+            }
+
+            HorizontalDivider()
+
+            // Sound / vibration
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Reminders", style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text("Sound", style = MaterialTheme.typography.bodyMedium)
+                    Switch(
+                        checked = reminderSound,
+                        onCheckedChange = {
+                            reminderSound = it
+                            AppSettings.setReminderSound(context, it)
+                        },
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text("Vibration", style = MaterialTheme.typography.bodyMedium)
+                    Switch(
+                        checked = reminderVibrate,
+                        onCheckedChange = {
+                            reminderVibrate = it
+                            AppSettings.setReminderVibrate(context, it)
+                        },
+                    )
                 }
             }
 
