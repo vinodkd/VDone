@@ -159,6 +159,7 @@ It evaluates all `conditions` rows against current state. When all conditions fo
 ### M8 — Reminder Polish
 - Sound on/off per reminder
 - Vibration on/off per reminder
+- Configurable snooze duration (currently hardcoded to 10 min)
 - Reminder history in task detail
 
 ### M9 — Next Tasks View Polish
