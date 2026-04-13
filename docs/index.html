@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VDone — Todo for Procrastinators</title>
+  <style>
+    :root {
+      --teal:        #00897B;
+      --teal-dark:   #00695C;
+      --teal-light:  #E0F2F1;
+      --text:        #1a1a1a;
+      --muted:       #555;
+      --border:      #ddd;
+      --bg:          #ffffff;
+      --card-bg:     #f9f9f9;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--teal);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+    }
+    nav .logo { color: #fff; font-size: 1.3rem; font-weight: 700; letter-spacing: -0.5px; }
+    nav a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 0.9rem; }
+    nav a:hover { color: #fff; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+      color: #fff;
+      text-align: center;
+      padding: 80px 24px 64px;
+    }
+    .hero .icon {
+      width: 96px; height: 96px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+      margin-bottom: 24px;
+    }
+    .hero h1 { font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .hero p  { font-size: 1.2rem; opacity: 0.9; max-width: 520px; margin: 0 auto 32px; }
+    .btn {
+      display: inline-block;
+      background: #fff;
+      color: var(--teal-dark);
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-outline {
+      background: transparent;
+      color: #fff;
+      border: 2px solid rgba(255,255,255,0.6);
+      margin-left: 12px;
+    }
+    .btn-outline:hover { border-color: #fff; opacity: 1; }
+
+    /* ── VIBE CODED BANNER ── */
+    .vibe-banner {
+      background: #fffbea;
+      border-bottom: 1px solid #f0e08a;
+      text-align: center;
+      padding: 12px 24px;
+      font-size: 0.9rem;
+      color: #7a6500;
+    }
+    .vibe-banner strong { color: #5a4a00; }
+
+    /* ── SECTIONS ── */
+    section { max-width: 860px; margin: 0 auto; padding: 64px 24px; }
+    section + section { padding-top: 0; }
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--teal-dark);
+    }
+
+    /* ── FEATURE GRID ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .feature-card .emoji { font-size: 1.8rem; margin-bottom: 10px; }
+    .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+    .feature-card p  { font-size: 0.9rem; color: var(--muted); }
+
+    /* ── INSTALL STEPS ── */
+    .steps { list-style: none; counter-reset: step; }
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      align-items: flex-start;
+    }
+    .steps li::before {
+      content: counter(step);
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      background: var(--teal);
+      color: #fff;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .steps li div { padding-top: 4px; }
+    .steps li strong { display: block; margin-bottom: 2px; }
+    .steps li p { font-size: 0.9rem; color: var(--muted); }
+    code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    /* ── VIBE SECTION ── */
+    .vibe-section {
+      background: var(--teal-light);
+      border-radius: 12px;
+      padding: 32px;
+      margin-top: 8px;
+    }
+    .vibe-section p { color: #00473e; font-size: 0.95rem; margin-bottom: 10px; }
+    .vibe-section p:last-child { margin-bottom: 0; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 32px 24px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--teal); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">V&#x2714; VDone</span>
+  <a href="https://github.com/vinodkd/VDone">GitHub &rarr;</a>
+</nav>
+
+<div class="hero">
+  <div class="icon">V&#x2714;</div>
+  <h1>VDone</h1>
+  <p>A todo app built for procrastinators. Flexible scheduling, intrusive reminders, and open-loop tracking — without forcing rigid deadlines.</p>
+  <a class="btn" href="https://github.com/vinodkd/VDone/releases/latest/download/vdone.apk">
+    Download APK (Android)
+  </a>
+  <a class="btn btn-outline" href="https://github.com/vinodkd/VDone">
+    View on GitHub
+  </a>
+</div>
+
+<div class="vibe-banner">
+  &#x1F916; Code written by AI &mdash; intent and design by human &mdash; <a href="https://github.com/vinodkd/VDone">open source</a>
+</div>
+
+<section>
+  <h2>Features</h2>
+  <div class="features">
+    <div class="feature-card">
+      <div class="emoji">&#x23F0;</div>
+      <h3>Intrusive Reminders</h3>
+      <p>Full-screen alarm when your phone is locked. Heads-up notification when it's on. You won't miss it.</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">&#x1F501;</div>
+      <h3>Recurring Tasks</h3>
+      <p>Daily, weekly, monthly, yearly — with an optional time of day. Frequency tasks reset automatically after completion.</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">&#x1F517;</div>
+      <h3>Condition-Based Scheduling</h3>
+      <p>Start a task after another finishes, before one starts, or after a named event like "after breakfast".</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">&#x1F4CB;</div>
+      <h3>Nested Tasks</h3>
+      <p>Break any task into subtasks to arbitrary depth. Parents show completion progress across their children.</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">&#x1F4AC;</div>
+      <h3>Open Loops</h3>
+      <p>Waiting on someone? Mark the task as an open loop with a follow-up date. The Loops tab keeps them visible so nothing falls through the cracks.</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">&#x1F4A4;</div>
+      <h3>Snooze</h3>
+      <p>Not right now? Snooze for 5, 10, 15, or 30 minutes. The reminder comes back. You cannot escape your tasks.</p>
+    </div>
+    <div class="feature-card">
+      <div class="emoji">&#x1F3A4;</div>
+      <h3>Show Mode</h3>
+      <p>At a gig or event? Enable Show Mode to silence all alarms globally. Switch it off when you're back and reminders resume.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Installing the APK</h2>
+  <p style="margin-bottom:24px; color:var(--muted); font-size:0.95rem;">
+    VDone is not yet on the Google Play Store. Install it directly using the APK file.
+    This requires enabling installs from unknown sources on your device.
+  </p>
+  <ol class="steps">
+    <li>
+      <div>
+        <strong>Download the APK</strong>
+        <p>Tap the "Download APK" button above, or go to the
+          <a href="https://github.com/vinodkd/VDone/releases/latest">Releases page</a>
+          and download <code>vdone.apk</code>.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>Allow installs from unknown sources</strong>
+        <p>On Android 8+: when prompted after opening the APK, tap <em>Settings</em> and enable
+          <em>"Allow from this source"</em> for your browser or file manager.
+          On older Android: go to <strong>Settings → Security → Unknown sources</strong> and enable it.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>Open the APK and install</strong>
+        <p>Open the downloaded file from your notifications or the Downloads folder.
+          Tap <em>Install</em> and wait for it to complete.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <strong>Grant permissions on first launch</strong>
+        <p>VDone will ask for <em>Notifications</em>, <em>Exact alarms</em>, and
+          <em>Display over other apps (full-screen intents)</em>.
+          All three are needed for reminders to work reliably.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section>
+  <h2>About this app</h2>
+  <div class="vibe-section">
+    <p>
+      VDone is <strong>local only</strong>. All your tasks stay on your device.
+      No account required. No data leaves your phone. No analytics, no tracking, no ads.
+    </p>
+    <p>
+      The code was written by <a href="https://claude.ai/code">Claude Code</a>.
+      The intent, design, and product decisions were made by a human.
+      Think of it as pair programming where one half of the pair never gets tired.
+    </p>
+    <p>
+      Source is fully open. Nine milestones from empty Android project to this release.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <p>
+    VDone &mdash; open source, Android-first, vibe coded &mdash;
+    <a href="https://github.com/vinodkd/VDone">github.com/vinodkd/VDone</a>
+  </p>
+</footer>
+
+</body>
+</html>
