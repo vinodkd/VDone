@@ -18,7 +18,9 @@ class ReminderReceiver : BroadcastReceiver() {
         // In show mode all alarms are silently suppressed
         if (AppSettings.isShowMode(context)) return
 
-        // Tap on notification → open main app
+        val isFollowUp = intent.getBooleanExtra(AlarmScheduler.EXTRA_IS_FOLLOWUP, false)
+        val waitingOn = intent.getStringExtra(AlarmScheduler.EXTRA_WAITING_ON)
+
         val openIntent = PendingIntent.getActivity(
             context,
             taskId.hashCode(),
@@ -28,28 +30,42 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        // Full-screen intent → launch ReminderActivity over lock screen
-        val fullScreenIntent = PendingIntent.getActivity(
-            context,
-            taskId.hashCode() xor 0x1000,
-            Intent(context, ReminderActivity::class.java).apply {
-                putExtra(AlarmScheduler.EXTRA_TASK_ID, taskId)
-                putExtra(AlarmScheduler.EXTRA_TASK_TITLE, taskTitle)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-
-        val notification = NotificationCompat.Builder(context, VDoneApp.REMINDER_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("Task due")
-            .setContentText(taskTitle)
-            .setContentIntent(openIntent)
-            .setFullScreenIntent(fullScreenIntent, true)
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .build()
+        val notification = if (isFollowUp) {
+            // Follow-up: plain notification, no full-screen interrupt
+            NotificationCompat.Builder(context, VDoneApp.REMINDER_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setContentTitle("Follow-up reminder")
+                .setContentText(
+                    if (!waitingOn.isNullOrBlank()) "$taskTitle — waiting on $waitingOn"
+                    else taskTitle
+                )
+                .setContentIntent(openIntent)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .build()
+        } else {
+            // Regular alarm: full-screen intent over lock screen
+            val fullScreenIntent = PendingIntent.getActivity(
+                context,
+                taskId.hashCode() xor 0x1000,
+                Intent(context, ReminderActivity::class.java).apply {
+                    putExtra(AlarmScheduler.EXTRA_TASK_ID, taskId)
+                    putExtra(AlarmScheduler.EXTRA_TASK_TITLE, taskTitle)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            NotificationCompat.Builder(context, VDoneApp.REMINDER_CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setContentTitle("Task due")
+                .setContentText(taskTitle)
+                .setContentIntent(openIntent)
+                .setFullScreenIntent(fullScreenIntent, true)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .build()
+        }
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(taskId.hashCode().and(0x7FFFFFFF), notification)

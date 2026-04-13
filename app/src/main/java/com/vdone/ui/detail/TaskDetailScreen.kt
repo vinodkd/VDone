@@ -138,6 +138,14 @@ fun TaskDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            Spacer(Modifier.height(12.dp))
+            WaitingOnSection(
+                waitingOn = uiState.waitingOn,
+                followUpAt = uiState.followUpAt,
+                onSetWaitingOn = { viewModel.setWaitingOn(it) },
+                onSetFollowUpAt = { viewModel.setFollowUpAt(it) },
+            )
+
             // Only show schedule for root tasks (not subtasks)
             if (uiState.parentId == null) {
                 Spacer(Modifier.height(16.dp))
@@ -633,6 +641,118 @@ private fun AddConditionDialog(
             TextButton(onClick = onDismiss) { Text("Cancel") }
         },
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WaitingOnSection(
+    waitingOn: String,
+    followUpAt: Long?,
+    onSetWaitingOn: (String) -> Unit,
+    onSetFollowUpAt: (Long?) -> Unit,
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    var pendingDateMs by remember { mutableStateOf(0L) }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = localToUtcMidnight(followUpAt ?: System.currentTimeMillis())
+    )
+    val cal = remember { Calendar.getInstance() }.apply {
+        timeInMillis = followUpAt ?: System.currentTimeMillis()
+    }
+    val timePickerState = rememberTimePickerState(
+        initialHour = cal.get(Calendar.HOUR_OF_DAY),
+        initialMinute = cal.get(Calendar.MINUTE),
+    )
+
+    Column {
+        OutlinedTextField(
+            value = waitingOn,
+            onValueChange = {
+                onSetWaitingOn(it)
+                if (it.isBlank()) onSetFollowUpAt(null)
+            },
+            label = { Text("Waiting on (optional)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (waitingOn.isNotBlank()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Follow up:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(end = 8.dp),
+                )
+                OutlinedButton(onClick = { showDatePicker = true }) {
+                    Text(if (followUpAt != null) DATE_FMT.format(followUpAt) else "Set date")
+                }
+                if (followUpAt != null) {
+                    TextButton(onClick = { onSetFollowUpAt(null) }) { Text("Clear") }
+                }
+            }
+        }
+    }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDatePicker = false
+                    pendingDateMs = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                    showTimePicker = true
+                }) { Text("Next") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            },
+        ) { DatePicker(state = datePickerState) }
+    }
+
+    if (showTimePicker) {
+        Dialog(onDismissRequest = { showTimePicker = false }) {
+            androidx.compose.material3.Surface(
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text("Pick time", style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 16.dp))
+                    TimePicker(state = timePickerState)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+                        TextButton(onClick = {
+                            showTimePicker = false
+                            val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                                timeInMillis = pendingDateMs
+                            }
+                            val c = Calendar.getInstance().apply {
+                                set(Calendar.YEAR, utcCal.get(Calendar.YEAR))
+                                set(Calendar.MONTH, utcCal.get(Calendar.MONTH))
+                                set(Calendar.DAY_OF_MONTH, utcCal.get(Calendar.DAY_OF_MONTH))
+                                set(Calendar.HOUR_OF_DAY, timePickerState.hour)
+                                set(Calendar.MINUTE, timePickerState.minute)
+                                set(Calendar.SECOND, 0)
+                                set(Calendar.MILLISECOND, 0)
+                            }
+                            onSetFollowUpAt(c.timeInMillis)
+                        }) { Text("OK") }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable

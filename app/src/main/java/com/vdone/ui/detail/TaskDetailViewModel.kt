@@ -31,6 +31,8 @@ data class TaskDetailUiState(
     val frequencyTime: Int? = null,      // minutes from midnight; null = anytime
     val fixedStart: Long? = null,
     val pendingConditions: List<PendingCondition> = emptyList(),
+    val waitingOn: String = "",
+    val followUpAt: Long? = null,
     val isSaved: Boolean = false,
 )
 
@@ -76,6 +78,8 @@ class TaskDetailViewModel(
                         frequency = task.frequency,
                         frequencyTime = task.frequencyTime,
                         fixedStart = task.fixedStart,
+                        waitingOn = task.waitingOn ?: "",
+                        followUpAt = task.followUpAt,
                     )
                 }
             }
@@ -96,6 +100,9 @@ class TaskDetailViewModel(
     fun setFrequencyTime(value: Int?) {
         _uiState.value = _uiState.value.copy(frequencyTime = value)
     }
+
+    fun setWaitingOn(value: String) { _uiState.value = _uiState.value.copy(waitingOn = value) }
+    fun setFollowUpAt(value: Long?) { _uiState.value = _uiState.value.copy(followUpAt = value) }
 
     fun setFixedStart(value: Long?) {
         _uiState.value = _uiState.value.copy(
@@ -173,6 +180,8 @@ class TaskDetailViewModel(
                     frequency = state.frequency,
                     frequencyTime = state.frequencyTime,
                     fixedStart = state.fixedStart,
+                    waitingOn = state.waitingOn.trim().ifBlank { null },
+                    followUpAt = state.followUpAt,
                 )
                 state.pendingConditions.forEach { pending ->
                     conditionRepository.addCondition(newId, pending.type, pending.refTaskId)
@@ -187,6 +196,8 @@ class TaskDetailViewModel(
                         frequency = state.frequency,
                         frequencyTime = state.frequencyTime,
                         fixedStart = state.fixedStart,
+                        waitingOn = state.waitingOn.trim().ifBlank { null },
+                        followUpAt = state.followUpAt,
                     )
                 )
             }

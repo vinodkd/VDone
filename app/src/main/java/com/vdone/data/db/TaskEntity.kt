@@ -15,6 +15,8 @@ data class TaskEntity(
     val frequencyTime: Int?,      // minutes from midnight (0-1439); null = anytime
     val fixedStart: Long?,        // unix ms; used when scheduleMode = "fixed"
     val lastCompletedAt: Long?,   // unix ms; null if never completed
+    val waitingOn: String?,       // free text; non-null means this task is an open loop
+    val followUpAt: Long?,        // unix ms; when to send a follow-up nudge
     val createdAt: Long,
     val updatedAt: Long,
 )

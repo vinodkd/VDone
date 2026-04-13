@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -25,6 +26,8 @@ import com.vdone.ui.detail.TaskDetailScreen
 import com.vdone.ui.detail.TaskDetailViewModel
 import com.vdone.ui.home.HomeScreen
 import com.vdone.ui.home.HomeViewModel
+import com.vdone.ui.loops.OpenLoopsScreen
+import com.vdone.ui.loops.OpenLoopsViewModel
 import com.vdone.ui.settings.SettingsScreen
 import com.vdone.ui.tasks.TaskListScreen
 import com.vdone.ui.tasks.TaskListViewModel
@@ -37,7 +40,7 @@ fun VDoneNavHost(repository: TaskRepository, conditionRepository: ConditionRepos
     val currentEntry by rootNav.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
 
-    val showBottomBar = currentRoute == "home" || currentRoute == "tasks"
+    val showBottomBar = currentRoute == "home" || currentRoute == "tasks" || currentRoute == "loops"
 
     Scaffold(
         bottomBar = {
@@ -62,6 +65,16 @@ fun VDoneNavHost(repository: TaskRepository, conditionRepository: ConditionRepos
                         },
                         icon = { Icon(Icons.Default.List, contentDescription = null) },
                         label = { Text("All Tasks") },
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == "loops",
+                        onClick = {
+                            rootNav.navigate("loops") {
+                                popUpTo("home")
+                            }
+                        },
+                        icon = { Icon(Icons.Default.Refresh, contentDescription = null) },
+                        label = { Text("Loops") },
                     )
                 }
             }
@@ -88,6 +101,15 @@ fun VDoneNavHost(repository: TaskRepository, conditionRepository: ConditionRepos
                 TaskListScreen(
                     viewModel = vm,
                     onAddTask = { rootNav.navigate("detail/$NEW") },
+                    onEditTask = { id -> rootNav.navigate("detail/$id") },
+                    onNavigateToSettings = { rootNav.navigate("settings") },
+                )
+            }
+
+            composable("loops") {
+                val vm: OpenLoopsViewModel = viewModel(factory = OpenLoopsViewModel.Factory(repository))
+                OpenLoopsScreen(
+                    viewModel = vm,
                     onEditTask = { id -> rootNav.navigate("detail/$id") },
                     onNavigateToSettings = { rootNav.navigate("settings") },
                 )

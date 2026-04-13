@@ -39,4 +39,11 @@ interface TaskDao {
 
     @Query("SELECT * FROM tasks WHERE scheduleMode = 'fixed' AND status != 'done' AND parentId IS NULL ORDER BY fixedStart ASC")
     fun getFixedTasks(): Flow<List<TaskEntity>>
+
+    @Query("""
+        SELECT * FROM tasks
+        WHERE waitingOn IS NOT NULL AND status != 'done'
+        ORDER BY CASE WHEN followUpAt IS NULL THEN 1 ELSE 0 END, followUpAt ASC
+    """)
+    fun getWaitingTasks(): Flow<List<TaskEntity>>
 }
