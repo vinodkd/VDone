@@ -8,6 +8,9 @@ import com.vdone.data.db.AppDatabase
 import com.vdone.data.db.MIGRATION_1_2
 import com.vdone.data.db.MIGRATION_2_3
 import com.vdone.data.db.MIGRATION_3_4
+import com.vdone.data.db.MIGRATION_4_5
+import com.vdone.data.db.MIGRATION_5_6
+import com.vdone.data.repository.ConditionRepository
 import com.vdone.data.repository.TaskRepository
 import com.vdone.reminder.AlarmScheduler
 import com.vdone.scheduler.SchedulerWorker
@@ -20,12 +23,16 @@ class VDoneApp : Application() {
 
     val database: AppDatabase by lazy {
         Room.databaseBuilder(this, AppDatabase::class.java, "vdone.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
             .build()
     }
 
     val taskRepository: TaskRepository by lazy {
         TaskRepository(database.taskDao(), this)
+    }
+
+    val conditionRepository: ConditionRepository by lazy {
+        ConditionRepository(database.conditionDao())
     }
 
     override fun onCreate() {
@@ -49,19 +56,17 @@ class VDoneApp : Application() {
         nm.createNotificationChannel(channel)
     }
 
-    companion object {
-        const val REMINDER_CHANNEL_ID = "vdone_reminders"
-    }
-
     private fun rescheduleAlarms() {
         CoroutineScope(Dispatchers.IO).launch {
             val now = System.currentTimeMillis()
             taskRepository.getFixedTasks().first().forEach { task ->
                 val fireAt = task.fixedStart ?: return@forEach
-                if (fireAt > now) {
-                    AlarmScheduler.schedule(this@VDoneApp, task)
-                }
+                if (fireAt > now) AlarmScheduler.schedule(this@VDoneApp, task)
             }
         }
+    }
+
+    companion object {
+        const val REMINDER_CHANNEL_ID = "vdone_reminders"
     }
 }

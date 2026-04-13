@@ -29,9 +29,21 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         frequency: String? = null,
         fixedStart: Long? = null,
     ) {
+        createTaskWithId(UUID.randomUUID().toString(), title, notes, parentId, scheduleMode, frequency, fixedStart)
+    }
+
+    suspend fun createTaskWithId(
+        id: String,
+        title: String,
+        notes: String?,
+        parentId: String? = null,
+        scheduleMode: String = "none",
+        frequency: String? = null,
+        fixedStart: Long? = null,
+    ) {
         val now = System.currentTimeMillis()
         val entity = TaskEntity(
-            id = UUID.randomUUID().toString(),
+            id = id,
             title = title,
             notes = notes,
             status = "todo",

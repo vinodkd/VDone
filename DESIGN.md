@@ -167,6 +167,8 @@ It evaluates all `conditions` rows against current state. When all conditions fo
 - Unscheduled tasks surfaced with a "do it sometime today?" nudge
 - Overdue tasks highlighted
 - Snoozed tasks visible but visually de-emphasised
+- Marking a task done in Next Tasks does not reflect in All Tasks view (status sync bug)
+- Conditions cannot be edited inline — only deleted and re-added
 
 ### M10 — iOS (future)
 - Swift + SwiftUI port

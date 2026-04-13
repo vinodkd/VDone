@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.vdone.data.repository.ConditionRepository
 import com.vdone.data.repository.TaskRepository
 import com.vdone.ui.detail.TaskDetailScreen
 import com.vdone.ui.detail.TaskDetailViewModel
@@ -30,7 +31,7 @@ import com.vdone.ui.tasks.TaskListViewModel
 private const val NEW = "new"
 
 @Composable
-fun VDoneNavHost(repository: TaskRepository) {
+fun VDoneNavHost(repository: TaskRepository, conditionRepository: ConditionRepository) {
     val rootNav = rememberNavController()
     val currentEntry by rootNav.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
@@ -71,7 +72,9 @@ fun VDoneNavHost(repository: TaskRepository) {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable("home") {
-                val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory(repository))
+                val vm: HomeViewModel = viewModel(
+                    factory = HomeViewModel.Factory(repository, conditionRepository)
+                )
                 HomeScreen(
                     viewModel = vm,
                     onEditTask = { id -> rootNav.navigate("detail/$id") },
@@ -94,7 +97,7 @@ fun VDoneNavHost(repository: TaskRepository) {
                 val rawId = backStackEntry.arguments!!.getString("taskId")!!
                 val taskId = if (rawId == NEW) null else rawId
                 val vm: TaskDetailViewModel = viewModel(
-                    factory = TaskDetailViewModel.Factory(repository, taskId),
+                    factory = TaskDetailViewModel.Factory(repository, conditionRepository, taskId),
                 )
                 TaskDetailScreen(
                     viewModel = vm,
@@ -114,7 +117,9 @@ fun VDoneNavHost(repository: TaskRepository) {
             ) { backStackEntry ->
                 val parentId = backStackEntry.arguments!!.getString("parentId")!!
                 val vm: TaskDetailViewModel = viewModel(
-                    factory = TaskDetailViewModel.Factory(repository, taskId = null, parentId = parentId),
+                    factory = TaskDetailViewModel.Factory(
+                        repository, conditionRepository, taskId = null, parentId = parentId
+                    ),
                 )
                 TaskDetailScreen(
                     viewModel = vm,

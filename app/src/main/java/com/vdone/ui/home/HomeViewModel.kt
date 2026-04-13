@@ -3,35 +3,78 @@ package com.vdone.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vdone.data.db.ConditionEntity
 import com.vdone.data.db.TaskEntity
+import com.vdone.data.repository.ConditionRepository
 import com.vdone.data.repository.TaskRepository
+import com.vdone.scheduler.ConditionEvaluator
 import com.vdone.scheduler.FrequencyChecker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
-class HomeViewModel(private val repository: TaskRepository) : ViewModel() {
+private data class TaskData(
+    val freqTasks: List<TaskEntity>,
+    val fixedTasks: List<TaskEntity>,
+    val allTasks: List<TaskEntity>,
+)
+
+private data class ConditionData(
+    val allConditions: List<ConditionEntity>,
+    val tick: Int,
+)
+
+class HomeViewModel(
+    private val repository: TaskRepository,
+    private val conditionRepository: ConditionRepository,
+) : ViewModel() {
 
     private val refreshTick = MutableStateFlow(0)
 
-    val dueTasks = combine(
+    private val taskData = combine(
         repository.getFrequencyTasks(),
         repository.getFixedTasks(),
+        repository.getAllTasks(),
+    ) { freq, fixed, all -> TaskData(freq, fixed, all) }
+
+    private val conditionData = combine(
+        conditionRepository.getAllConditions(),
         refreshTick,
-    ) { freqTasks, fixedTasks, _ ->
-        val endOfToday = java.util.Calendar.getInstance().apply {
-            set(java.util.Calendar.HOUR_OF_DAY, 23)
-            set(java.util.Calendar.MINUTE, 59)
-            set(java.util.Calendar.SECOND, 59)
-            set(java.util.Calendar.MILLISECOND, 999)
+    ) { conditions, tick -> ConditionData(conditions, tick) }
+
+    val dueTasks = combine(taskData, conditionData) { td, cd ->
+        val now = System.currentTimeMillis()
+        val endOfToday = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
         }.timeInMillis
-        val dueFreq = freqTasks.filter { FrequencyChecker.isDueToday(it) }
-        val dueFixed = fixedTasks.filter { it.fixedStart != null && it.fixedStart <= endOfToday }
-        (dueFreq + dueFixed).sortedWith(
-            compareBy(nullsLast()) { it.fixedStart }
-        )
+
+        val taskMap = td.allTasks.associateBy { it.id }
+        val conditionsByTask = cd.allConditions.groupBy { it.taskId }
+
+        val dueFreq = td.freqTasks.filter { task ->
+            FrequencyChecker.isDueToday(task) &&
+                ConditionEvaluator.areAllMet(conditionsByTask[task.id].orEmpty(), taskMap, now)
+        }
+        val dueFixed = td.fixedTasks.filter { task ->
+            task.fixedStart != null && task.fixedStart <= endOfToday &&
+                ConditionEvaluator.areAllMet(conditionsByTask[task.id].orEmpty(), taskMap, now)
+        }
+        val dueConditional = td.allTasks.filter { task ->
+            task.scheduleMode == "condition" &&
+                task.status != "done" &&
+                task.parentId == null &&
+                ConditionEvaluator.areAllMet(conditionsByTask[task.id].orEmpty(), taskMap, now)
+        }
+
+        (dueFreq + dueFixed + dueConditional)
+            .distinctBy { it.id }
+            .sortedWith(compareBy(nullsLast()) { it.fixedStart })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun refresh() { refreshTick.value++ }
@@ -46,9 +89,12 @@ class HomeViewModel(private val repository: TaskRepository) : ViewModel() {
         }
     }
 
-    class Factory(private val repository: TaskRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repository: TaskRepository,
+        private val conditionRepository: ConditionRepository,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>) =
-            HomeViewModel(repository) as T
+            HomeViewModel(repository, conditionRepository) as T
     }
 }

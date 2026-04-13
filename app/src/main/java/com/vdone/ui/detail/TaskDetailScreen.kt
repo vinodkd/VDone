@@ -7,10 +7,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,38 +22,47 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.vdone.data.db.ConditionEntity
 import com.vdone.data.db.TaskEntity
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -75,6 +80,8 @@ fun TaskDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val subtasks by viewModel.subtasks.collectAsState()
+    val savedConditions by viewModel.savedConditions.collectAsState()
+    val allTasks by viewModel.allTasks.collectAsState()
 
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) onBack()
@@ -134,10 +141,18 @@ fun TaskDetailScreen(
             if (uiState.parentId == null) {
                 Spacer(Modifier.height(16.dp))
                 ScheduleSection(
+                    scheduleMode = uiState.scheduleMode,
                     frequency = uiState.frequency,
                     fixedStart = uiState.fixedStart,
+                    savedConditions = savedConditions,
+                    pendingConditions = uiState.pendingConditions,
+                    allTasks = allTasks.filter { it.id != taskId && it.parentId == null },
+                    onSetScheduleMode = { viewModel.setScheduleMode(it) },
                     onSetFrequency = { viewModel.setFrequency(it) },
                     onSetFixedStart = { viewModel.setFixedStart(it) },
+                    onAddCondition = { type, refTaskId -> viewModel.addCondition(type, refTaskId) },
+                    onDeleteSavedCondition = { viewModel.deleteSavedCondition(it) },
+                    onDeletePendingCondition = { viewModel.deletePendingCondition(it) },
                 )
             }
 
@@ -161,8 +176,6 @@ fun TaskDetailScreen(
 private val FREQUENCIES = listOf("daily", "weekly", "monthly", "yearly")
 private val DATE_FMT = SimpleDateFormat("EEE, MMM d yyyy  HH:mm", Locale.getDefault())
 
-// DatePicker works in UTC dates. Convert a local-timezone timestamp to
-// UTC midnight of that same local date so the picker shows the correct day.
 private fun localToUtcMidnight(localMs: Long): Long {
     val local = Calendar.getInstance().apply { timeInMillis = localMs }
     return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
@@ -179,15 +192,23 @@ private fun localToUtcMidnight(localMs: Long): Long {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun ScheduleSection(
+    scheduleMode: String,
     frequency: String?,
     fixedStart: Long?,
+    savedConditions: List<ConditionEntity>,
+    pendingConditions: List<PendingCondition>,
+    allTasks: List<TaskEntity>,
+    onSetScheduleMode: (String) -> Unit,
     onSetFrequency: (String?) -> Unit,
     onSetFixedStart: (Long?) -> Unit,
+    onAddCondition: (type: String, refTaskId: String?) -> Unit,
+    onDeleteSavedCondition: (String) -> Unit,
+    onDeletePendingCondition: (String) -> Unit,
 ) {
-    // 0 = none, 1 = recurring, 2 = fixed date
-    val mode = when {
-        frequency != null -> 1
-        fixedStart != null -> 2
+    val modeIndex = when (scheduleMode) {
+        "frequency" -> 1
+        "fixed" -> 2
+        "condition" -> 3
         else -> 0
     }
 
@@ -212,26 +233,29 @@ private fun ScheduleSection(
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)) {
-            listOf("None", "Recurring", "On date").forEachIndexed { index, label ->
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        ) {
+            listOf("None", "Recurring", "On date", "Conditional").forEachIndexed { index, label ->
                 SegmentedButton(
-                    selected = mode == index,
+                    selected = modeIndex == index,
                     onClick = {
                         when (index) {
-                            0 -> { onSetFrequency(null); onSetFixedStart(null) }
-                            1 -> onSetFrequency(frequency ?: "daily")
-                            2 -> { onSetFrequency(null); showDatePicker = true }
+                            0 -> onSetScheduleMode("none")
+                            1 -> onSetScheduleMode("frequency")
+                            2 -> { onSetScheduleMode("fixed"); showDatePicker = true }
+                            3 -> onSetScheduleMode("condition")
                         }
                     },
-                    shape = SegmentedButtonDefaults.itemShape(index, 3),
+                    shape = SegmentedButtonDefaults.itemShape(index, 4),
                     label = { Text(label) },
                 )
             }
         }
 
-        if (mode == 1) {
+        if (modeIndex == 1) {
             FlowRow(
                 modifier = Modifier.padding(top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -246,7 +270,7 @@ private fun ScheduleSection(
             }
         }
 
-        if (mode == 2 && fixedStart != null) {
+        if (modeIndex == 2 && fixedStart != null) {
             OutlinedButton(
                 onClick = { showDatePicker = true },
                 modifier = Modifier
@@ -256,28 +280,37 @@ private fun ScheduleSection(
                 Text(DATE_FMT.format(fixedStart))
             }
         }
+
+        if (modeIndex == 3) {
+            ConditionSection(
+                savedConditions = savedConditions,
+                pendingConditions = pendingConditions,
+                allTasks = allTasks,
+                onAdd = onAddCondition,
+                onDeleteSaved = onDeleteSavedCondition,
+                onDeletePending = onDeletePendingCondition,
+            )
+        }
     }
 
-    // Date picker dialog
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
+                TextButton(onClick = {
                     showDatePicker = false
                     pendingDateMs = datePickerState.selectedDateMillis ?: System.currentTimeMillis()
                     showTimePicker = true
                 }) { Text("Next") }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
             },
         ) {
             DatePicker(state = datePickerState)
         }
     }
 
-    // Time picker dialog
     if (showTimePicker) {
         Dialog(onDismissRequest = { showTimePicker = false }) {
             androidx.compose.material3.Surface(
@@ -299,13 +332,9 @@ private fun ScheduleSection(
                             .padding(top = 8.dp),
                         horizontalArrangement = Arrangement.End,
                     ) {
-                        androidx.compose.material3.TextButton(onClick = { showTimePicker = false }) {
-                            Text("Cancel")
-                        }
-                        androidx.compose.material3.TextButton(onClick = {
+                        TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+                        TextButton(onClick = {
                             showTimePicker = false
-                            // DatePicker returns UTC midnight — extract Y/M/D in UTC
-                            // to avoid off-by-one in timezones behind UTC
                             val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
                                 timeInMillis = pendingDateMs
                             }
@@ -325,6 +354,181 @@ private fun ScheduleSection(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConditionSection(
+    savedConditions: List<ConditionEntity>,
+    pendingConditions: List<PendingCondition>,
+    allTasks: List<TaskEntity>,
+    onAdd: (type: String, refTaskId: String?) -> Unit,
+    onDeleteSaved: (String) -> Unit,
+    onDeletePending: (String) -> Unit,
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    val hasAny = savedConditions.isNotEmpty() || pendingConditions.isNotEmpty()
+
+    Column(modifier = Modifier.padding(top = 8.dp)) {
+        if (!hasAny) {
+            Text(
+                "No conditions yet. Task will appear in Next Tasks immediately.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 4.dp),
+            )
+        } else {
+            savedConditions.forEach { condition ->
+                ListItem(
+                    headlineContent = { Text(condition.label(allTasks)) },
+                    trailingContent = {
+                        IconButton(onClick = { onDeleteSaved(condition.id) }) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Remove condition",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    },
+                )
+                HorizontalDivider()
+            }
+            pendingConditions.forEach { pending ->
+                ListItem(
+                    headlineContent = { Text(pending.label(allTasks)) },
+                    trailingContent = {
+                        IconButton(onClick = { onDeletePending(pending.id) }) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Remove condition",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    },
+                )
+                HorizontalDivider()
+            }
+        }
+        TextButton(onClick = { showDialog = true }) {
+            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+            Text("Add condition")
+        }
+    }
+
+    if (showDialog) {
+        AddConditionDialog(
+            allTasks = allTasks,
+            onDismiss = { showDialog = false },
+            onConfirm = { type, refTaskId ->
+                onAdd(type, refTaskId)
+                showDialog = false
+            },
+        )
+    }
+}
+
+private fun ConditionEntity.label(tasks: List<TaskEntity>): String {
+    val refTitle = tasks.find { it.id == refTaskId }?.title ?: "?"
+    return when (type) {
+        "after_task_done" -> "After done: $refTitle"
+        "before_task_time" -> "Before: $refTitle"
+        else -> type
+    }
+}
+
+private fun PendingCondition.label(tasks: List<TaskEntity>): String {
+    val refTitle = tasks.find { it.id == refTaskId }?.title ?: "?"
+    return when (type) {
+        "after_task_done" -> "After done: $refTitle"
+        "before_task_time" -> "Before: $refTitle"
+        else -> type
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddConditionDialog(
+    allTasks: List<TaskEntity>,
+    onDismiss: () -> Unit,
+    onConfirm: (type: String, refTaskId: String?) -> Unit,
+) {
+    // "After task done" or "Before task time" — both require picking a task
+    val conditionTypes = listOf("After task done" to "after_task_done", "Before task time" to "before_task_time")
+    var selectedType by remember { mutableStateOf(conditionTypes[0]) }
+    var selectedTask by remember { mutableStateOf(allTasks.firstOrNull()) }
+    var typeExpanded by remember { mutableStateOf(false) }
+    var taskExpanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Condition") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ExposedDropdownMenuBox(
+                    expanded = typeExpanded,
+                    onExpandedChange = { typeExpanded = it },
+                ) {
+                    OutlinedTextField(
+                        value = selectedType.first,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Type") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(typeExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    )
+                    ExposedDropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
+                        conditionTypes.forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text(type.first) },
+                                onClick = { selectedType = type; typeExpanded = false },
+                            )
+                        }
+                    }
+                }
+
+                ExposedDropdownMenuBox(
+                    expanded = taskExpanded,
+                    onExpandedChange = { taskExpanded = it },
+                ) {
+                    OutlinedTextField(
+                        value = selectedTask?.title ?: "No tasks available",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Task") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(taskExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    )
+                    ExposedDropdownMenu(expanded = taskExpanded, onDismissRequest = { taskExpanded = false }) {
+                        if (allTasks.isEmpty()) {
+                            DropdownMenuItem(text = { Text("No other tasks") }, onClick = {})
+                        } else {
+                            allTasks.forEach { task ->
+                                DropdownMenuItem(
+                                    text = { Text(task.title) },
+                                    onClick = { selectedTask = task; taskExpanded = false },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { selectedTask?.let { onConfirm(selectedType.second, it.id) } },
+                enabled = selectedTask != null,
+            ) { Text("Add") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 @Composable

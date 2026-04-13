@@ -27,10 +27,13 @@ class MainActivity : ComponentActivity() {
         requestNeededPermissions()
         requestExactAlarmPermission()
         requestFullScreenIntentPermission()
-        val repository = (application as VDoneApp).taskRepository
+        val app = application as VDoneApp
         setContent {
             VDoneTheme {
-                VDoneNavHost(repository = repository)
+                VDoneNavHost(
+                    repository = app.taskRepository,
+                    conditionRepository = app.conditionRepository,
+                )
             }
         }
     }
