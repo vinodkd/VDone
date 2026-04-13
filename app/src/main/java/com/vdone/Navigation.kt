@@ -72,7 +72,10 @@ fun VDoneNavHost(repository: TaskRepository) {
         ) {
             composable("home") {
                 val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory(repository))
-                HomeScreen(viewModel = vm)
+                HomeScreen(
+                    viewModel = vm,
+                    onEditTask = { id -> rootNav.navigate("detail/$id") },
+                )
             }
 
             composable("tasks") {

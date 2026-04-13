@@ -62,6 +62,7 @@ import com.vdone.data.db.TaskEntity
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -160,6 +161,21 @@ fun TaskDetailScreen(
 private val FREQUENCIES = listOf("daily", "weekly", "monthly", "yearly")
 private val DATE_FMT = SimpleDateFormat("EEE, MMM d yyyy  HH:mm", Locale.getDefault())
 
+// DatePicker works in UTC dates. Convert a local-timezone timestamp to
+// UTC midnight of that same local date so the picker shows the correct day.
+private fun localToUtcMidnight(localMs: Long): Long {
+    val local = Calendar.getInstance().apply { timeInMillis = localMs }
+    return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        set(Calendar.YEAR, local.get(Calendar.YEAR))
+        set(Calendar.MONTH, local.get(Calendar.MONTH))
+        set(Calendar.DAY_OF_MONTH, local.get(Calendar.DAY_OF_MONTH))
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun ScheduleSection(
@@ -180,7 +196,7 @@ private fun ScheduleSection(
     var pendingDateMs by remember { mutableStateOf(0L) }
 
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = fixedStart ?: System.currentTimeMillis()
+        initialSelectedDateMillis = localToUtcMidnight(fixedStart ?: System.currentTimeMillis())
     )
     val cal = remember { Calendar.getInstance() }.apply {
         timeInMillis = fixedStart ?: System.currentTimeMillis()
@@ -288,8 +304,15 @@ private fun ScheduleSection(
                         }
                         androidx.compose.material3.TextButton(onClick = {
                             showTimePicker = false
-                            val c = Calendar.getInstance().apply {
+                            // DatePicker returns UTC midnight — extract Y/M/D in UTC
+                            // to avoid off-by-one in timezones behind UTC
+                            val utcCal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
                                 timeInMillis = pendingDateMs
+                            }
+                            val c = Calendar.getInstance().apply {
+                                set(Calendar.YEAR, utcCal.get(Calendar.YEAR))
+                                set(Calendar.MONTH, utcCal.get(Calendar.MONTH))
+                                set(Calendar.DAY_OF_MONTH, utcCal.get(Calendar.DAY_OF_MONTH))
                                 set(Calendar.HOUR_OF_DAY, timePickerState.hour)
                                 set(Calendar.MINUTE, timePickerState.minute)
                                 set(Calendar.SECOND, 0)

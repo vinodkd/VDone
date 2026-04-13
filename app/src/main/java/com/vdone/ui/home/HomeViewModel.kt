@@ -21,9 +21,14 @@ class HomeViewModel(private val repository: TaskRepository) : ViewModel() {
         repository.getFixedTasks(),
         refreshTick,
     ) { freqTasks, fixedTasks, _ ->
-        val now = System.currentTimeMillis()
+        val endOfToday = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 23)
+            set(java.util.Calendar.MINUTE, 59)
+            set(java.util.Calendar.SECOND, 59)
+            set(java.util.Calendar.MILLISECOND, 999)
+        }.timeInMillis
         val dueFreq = freqTasks.filter { FrequencyChecker.isDueToday(it) }
-        val dueFixed = fixedTasks.filter { it.fixedStart != null && it.fixedStart <= now }
+        val dueFixed = fixedTasks.filter { it.fixedStart != null && it.fixedStart <= endOfToday }
         (dueFreq + dueFixed).sortedWith(
             compareBy(nullsLast()) { it.fixedStart }
         )

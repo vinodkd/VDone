@@ -1,11 +1,13 @@
 package com.vdone.data.repository
 
+import android.content.Context
 import com.vdone.data.db.TaskDao
 import com.vdone.data.db.TaskEntity
+import com.vdone.reminder.AlarmScheduler
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
-class TaskRepository(private val dao: TaskDao) {
+class TaskRepository(private val dao: TaskDao, private val context: Context) {
 
     fun getAllTasks(): Flow<List<TaskEntity>> = dao.getAllTasks()
 
@@ -28,44 +30,48 @@ class TaskRepository(private val dao: TaskDao) {
         fixedStart: Long? = null,
     ) {
         val now = System.currentTimeMillis()
-        dao.insert(
-            TaskEntity(
-                id = UUID.randomUUID().toString(),
-                title = title,
-                notes = notes,
-                status = "todo",
-                parentId = parentId,
-                scheduleMode = scheduleMode,
-                frequency = frequency,
-                fixedStart = fixedStart,
-                lastCompletedAt = null,
-                createdAt = now,
-                updatedAt = now,
-            )
+        val entity = TaskEntity(
+            id = UUID.randomUUID().toString(),
+            title = title,
+            notes = notes,
+            status = "todo",
+            parentId = parentId,
+            scheduleMode = scheduleMode,
+            frequency = frequency,
+            fixedStart = fixedStart,
+            lastCompletedAt = null,
+            createdAt = now,
+            updatedAt = now,
         )
+        dao.insert(entity)
+        if (scheduleMode == "fixed" && fixedStart != null) {
+            AlarmScheduler.schedule(context, entity)
+        }
     }
 
     suspend fun updateTask(task: TaskEntity) {
-        dao.update(task.copy(updatedAt = System.currentTimeMillis()))
+        val updated = task.copy(updatedAt = System.currentTimeMillis())
+        dao.update(updated)
+        if (updated.scheduleMode == "fixed" && updated.fixedStart != null) {
+            AlarmScheduler.schedule(context, updated)
+        } else {
+            AlarmScheduler.cancel(context, task.id)
+        }
     }
 
     suspend fun toggleStatus(task: TaskEntity) {
         val newStatus = if (task.status == "done") "todo" else "done"
         dao.update(task.copy(status = newStatus, updatedAt = System.currentTimeMillis()))
+        if (newStatus == "done") AlarmScheduler.cancel(context, task.id)
     }
 
     suspend fun completeFrequencyTask(task: TaskEntity) {
         val now = System.currentTimeMillis()
-        dao.update(
-            task.copy(
-                status = "todo",   // immediately resets for next period
-                lastCompletedAt = now,
-                updatedAt = now,
-            )
-        )
+        dao.update(task.copy(status = "todo", lastCompletedAt = now, updatedAt = now))
     }
 
     suspend fun deleteTask(task: TaskEntity) {
+        AlarmScheduler.cancel(context, task.id)
         dao.deleteChildrenOf(task.id)
         dao.delete(task)
     }

@@ -1,5 +1,6 @@
 package com.vdone.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.DisposableEffect
@@ -34,7 +35,7 @@ import com.vdone.data.db.TaskEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel) {
+fun HomeScreen(viewModel: HomeViewModel, onEditTask: (String) -> Unit) {
     val dueTasks by viewModel.dueTasks.collectAsState()
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -79,7 +80,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
             ) {
                 item { }
                 items(dueTasks, key = { it.id }) { task ->
-                    DueTaskCard(task = task, onDone = { viewModel.complete(task) })
+                    DueTaskCard(
+                        task = task,
+                        onDone = { viewModel.complete(task) },
+                        onEdit = { onEditTask(task.id) },
+                    )
                 }
                 item { }
             }
@@ -88,9 +93,11 @@ fun HomeScreen(viewModel: HomeViewModel) {
 }
 
 @Composable
-private fun DueTaskCard(task: TaskEntity, onDone: () -> Unit) {
+private fun DueTaskCard(task: TaskEntity, onDone: () -> Unit, onEdit: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onEdit),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {

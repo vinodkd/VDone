@@ -1,13 +1,20 @@
 package com.vdone
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import androidx.room.Room
 import com.vdone.data.db.AppDatabase
 import com.vdone.data.db.MIGRATION_1_2
 import com.vdone.data.db.MIGRATION_2_3
 import com.vdone.data.db.MIGRATION_3_4
 import com.vdone.data.repository.TaskRepository
+import com.vdone.reminder.AlarmScheduler
 import com.vdone.scheduler.SchedulerWorker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class VDoneApp : Application() {
 
@@ -18,11 +25,43 @@ class VDoneApp : Application() {
     }
 
     val taskRepository: TaskRepository by lazy {
-        TaskRepository(database.taskDao())
+        TaskRepository(database.taskDao(), this)
     }
 
     override fun onCreate() {
         super.onCreate()
+        createNotificationChannel()
         SchedulerWorker.schedule(this)
+        rescheduleAlarms()
+    }
+
+    private fun createNotificationChannel() {
+        val nm = getSystemService(NotificationManager::class.java)
+        if (nm.getNotificationChannel(REMINDER_CHANNEL_ID) != null) return
+        val channel = NotificationChannel(
+            REMINDER_CHANNEL_ID,
+            "Task Reminders",
+            NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            description = "Notifications for scheduled tasks"
+            enableVibration(true)
+        }
+        nm.createNotificationChannel(channel)
+    }
+
+    companion object {
+        const val REMINDER_CHANNEL_ID = "vdone_reminders"
+    }
+
+    private fun rescheduleAlarms() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val now = System.currentTimeMillis()
+            taskRepository.getFixedTasks().first().forEach { task ->
+                val fireAt = task.fixedStart ?: return@forEach
+                if (fireAt > now) {
+                    AlarmScheduler.schedule(this@VDoneApp, task)
+                }
+            }
+        }
     }
 }
