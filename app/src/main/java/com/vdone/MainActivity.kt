@@ -2,6 +2,7 @@ package com.vdone
 
 import android.Manifest
 import android.app.AlarmManager
+import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -25,10 +26,24 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         requestNeededPermissions()
         requestExactAlarmPermission()
+        requestFullScreenIntentPermission()
         val repository = (application as VDoneApp).taskRepository
         setContent {
             VDoneTheme {
                 VDoneNavHost(repository = repository)
+            }
+        }
+    }
+
+    private fun requestFullScreenIntentPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val nm = getSystemService(NotificationManager::class.java)
+            @Suppress("NewApi")
+            if (!nm.canUseFullScreenIntent()) {
+                // ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENTS added in API 34
+                val intent = Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENTS")
+                intent.data = android.net.Uri.parse("package:$packageName")
+                startActivity(intent)
             }
         }
     }

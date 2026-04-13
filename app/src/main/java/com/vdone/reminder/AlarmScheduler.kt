@@ -25,6 +25,12 @@ object AlarmScheduler {
         )
     }
 
+    fun scheduleAt(context: Context, taskId: String, taskTitle: String, triggerAt: Long) {
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) return
+        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent(context, taskId, taskTitle))
+    }
+
     fun cancel(context: Context, taskId: String) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         am.cancel(pendingIntent(context, taskId, ""))

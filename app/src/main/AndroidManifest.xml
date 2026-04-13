@@ -25,6 +25,14 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".reminder.ReminderActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true" />
+
         <service
             android:name=".reminder.ReminderService"
             android:exported="false"

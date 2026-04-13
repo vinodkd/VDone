@@ -14,10 +14,23 @@ class ReminderReceiver : BroadcastReceiver() {
         val taskId = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_ID) ?: return
         val taskTitle = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_TITLE) ?: "Task due"
 
+        // Tap on notification → open main app
         val openIntent = PendingIntent.getActivity(
             context,
             taskId.hashCode(),
             Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        // Full-screen intent → launch ReminderActivity over lock screen
+        val fullScreenIntent = PendingIntent.getActivity(
+            context,
+            taskId.hashCode() xor 0x1000,
+            Intent(context, ReminderActivity::class.java).apply {
+                putExtra(AlarmScheduler.EXTRA_TASK_ID, taskId)
+                putExtra(AlarmScheduler.EXTRA_TASK_TITLE, taskTitle)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
@@ -28,8 +41,10 @@ class ReminderReceiver : BroadcastReceiver() {
             .setContentTitle("Task due")
             .setContentText(taskTitle)
             .setContentIntent(openIntent)
+            .setFullScreenIntent(fullScreenIntent, true)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .build()
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
