@@ -12,6 +12,7 @@ data class TaskEntity(
     val parentId: String?,        // null = root task
     val scheduleMode: String,     // "none" | "frequency" | "fixed"
     val frequency: String?,       // "daily" | "weekly" | "monthly" | "yearly"
+    val frequencyTime: Int?,      // minutes from midnight (0-1439); null = anytime
     val fixedStart: Long?,        // unix ms; used when scheduleMode = "fixed"
     val lastCompletedAt: Long?,   // unix ms; null if never completed
     val createdAt: Long,

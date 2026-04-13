@@ -27,9 +27,10 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         parentId: String? = null,
         scheduleMode: String = "none",
         frequency: String? = null,
+        frequencyTime: Int? = null,
         fixedStart: Long? = null,
     ) {
-        createTaskWithId(UUID.randomUUID().toString(), title, notes, parentId, scheduleMode, frequency, fixedStart)
+        createTaskWithId(UUID.randomUUID().toString(), title, notes, parentId, scheduleMode, frequency, frequencyTime, fixedStart)
     }
 
     suspend fun createTaskWithId(
@@ -39,6 +40,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         parentId: String? = null,
         scheduleMode: String = "none",
         frequency: String? = null,
+        frequencyTime: Int? = null,
         fixedStart: Long? = null,
     ) {
         val now = System.currentTimeMillis()
@@ -50,24 +52,28 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
             parentId = parentId,
             scheduleMode = scheduleMode,
             frequency = frequency,
+            frequencyTime = frequencyTime,
             fixedStart = fixedStart,
             lastCompletedAt = null,
             createdAt = now,
             updatedAt = now,
         )
         dao.insert(entity)
-        if (scheduleMode == "fixed" && fixedStart != null) {
-            AlarmScheduler.schedule(context, entity)
+        when {
+            scheduleMode == "fixed" && fixedStart != null -> AlarmScheduler.schedule(context, entity)
+            scheduleMode == "frequency" && frequencyTime != null -> AlarmScheduler.scheduleFrequency(context, entity)
         }
     }
 
     suspend fun updateTask(task: TaskEntity) {
         val updated = task.copy(updatedAt = System.currentTimeMillis())
         dao.update(updated)
-        if (updated.scheduleMode == "fixed" && updated.fixedStart != null) {
-            AlarmScheduler.schedule(context, updated)
-        } else {
-            AlarmScheduler.cancel(context, task.id)
+        when {
+            updated.scheduleMode == "fixed" && updated.fixedStart != null ->
+                AlarmScheduler.schedule(context, updated)
+            updated.scheduleMode == "frequency" && updated.frequencyTime != null ->
+                AlarmScheduler.scheduleFrequency(context, updated)
+            else -> AlarmScheduler.cancel(context, task.id)
         }
     }
 
@@ -80,6 +86,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
     suspend fun completeFrequencyTask(task: TaskEntity) {
         val now = System.currentTimeMillis()
         dao.update(task.copy(status = "todo", lastCompletedAt = now, updatedAt = now))
+        if (task.frequencyTime != null) AlarmScheduler.scheduleFrequency(context, task)
     }
 
     suspend fun deleteTask(task: TaskEntity) {

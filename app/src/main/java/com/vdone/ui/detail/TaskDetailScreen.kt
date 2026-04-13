@@ -143,12 +143,14 @@ fun TaskDetailScreen(
                 ScheduleSection(
                     scheduleMode = uiState.scheduleMode,
                     frequency = uiState.frequency,
+                    frequencyTime = uiState.frequencyTime,
                     fixedStart = uiState.fixedStart,
                     savedConditions = savedConditions,
                     pendingConditions = uiState.pendingConditions,
                     allTasks = allTasks.filter { it.id != taskId && it.parentId == null },
                     onSetScheduleMode = { viewModel.setScheduleMode(it) },
                     onSetFrequency = { viewModel.setFrequency(it) },
+                    onSetFrequencyTime = { viewModel.setFrequencyTime(it) },
                     onSetFixedStart = { viewModel.setFixedStart(it) },
                     onAddCondition = { type, refTaskId -> viewModel.addCondition(type, refTaskId) },
                     onDeleteSavedCondition = { viewModel.deleteSavedCondition(it) },
@@ -194,12 +196,14 @@ private fun localToUtcMidnight(localMs: Long): Long {
 private fun ScheduleSection(
     scheduleMode: String,
     frequency: String?,
+    frequencyTime: Int?,
     fixedStart: Long?,
     savedConditions: List<ConditionEntity>,
     pendingConditions: List<PendingCondition>,
     allTasks: List<TaskEntity>,
     onSetScheduleMode: (String) -> Unit,
     onSetFrequency: (String?) -> Unit,
+    onSetFrequencyTime: (Int?) -> Unit,
     onSetFixedStart: (Long?) -> Unit,
     onAddCondition: (type: String, refTaskId: String?) -> Unit,
     onDeleteSavedCondition: (String) -> Unit,
@@ -214,6 +218,7 @@ private fun ScheduleSection(
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+    var showFrequencyTimePicker by remember { mutableStateOf(false) }
     var pendingDateMs by remember { mutableStateOf(0L) }
 
     val datePickerState = rememberDatePickerState(
@@ -225,6 +230,10 @@ private fun ScheduleSection(
     val timePickerState = rememberTimePickerState(
         initialHour = cal.get(Calendar.HOUR_OF_DAY),
         initialMinute = cal.get(Calendar.MINUTE),
+    )
+    val freqTimePickerState = rememberTimePickerState(
+        initialHour = (frequencyTime ?: 480) / 60,   // default 8 AM
+        initialMinute = (frequencyTime ?: 480) % 60,
     )
 
     Column {
@@ -266,6 +275,28 @@ private fun ScheduleSection(
                         onClick = { onSetFrequency(if (frequency == freq) "daily" else freq) },
                         label = { Text(freq.replaceFirstChar { it.uppercase() }) },
                     )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "At:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(end = 8.dp),
+                )
+                OutlinedButton(onClick = { showFrequencyTimePicker = true }) {
+                    Text(
+                        if (frequencyTime != null)
+                            "%02d:%02d".format(frequencyTime / 60, frequencyTime % 60)
+                        else "Any time"
+                    )
+                }
+                if (frequencyTime != null) {
+                    TextButton(onClick = { onSetFrequencyTime(null) }) { Text("Clear") }
                 }
             }
         }
@@ -348,6 +379,38 @@ private fun ScheduleSection(
                                 set(Calendar.MILLISECOND, 0)
                             }
                             onSetFixedStart(c.timeInMillis)
+                        }) { Text("OK") }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showFrequencyTimePicker) {
+        Dialog(onDismissRequest = { showFrequencyTimePicker = false }) {
+            androidx.compose.material3.Surface(
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        "Pick time",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 16.dp),
+                    )
+                    TimePicker(state = freqTimePickerState)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = { showFrequencyTimePicker = false }) { Text("Cancel") }
+                        TextButton(onClick = {
+                            showFrequencyTimePicker = false
+                            onSetFrequencyTime(freqTimePickerState.hour * 60 + freqTimePickerState.minute)
                         }) { Text("OK") }
                     }
                 }

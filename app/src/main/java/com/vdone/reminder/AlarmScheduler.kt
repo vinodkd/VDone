@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.vdone.data.db.TaskEntity
+import java.util.Calendar
 
 object AlarmScheduler {
 
@@ -23,6 +24,20 @@ object AlarmScheduler {
             triggerAt,
             pendingIntent(context, task.id, task.title),
         )
+    }
+
+    fun scheduleFrequency(context: Context, task: TaskEntity) {
+        val minuteOfDay = task.frequencyTime ?: return
+        val now = System.currentTimeMillis()
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, minuteOfDay / 60)
+            set(Calendar.MINUTE, minuteOfDay % 60)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        if (cal.timeInMillis <= now) cal.add(Calendar.DAY_OF_YEAR, 1)
+        scheduleAt(context, task.id, task.title, cal.timeInMillis)
     }
 
     fun scheduleAt(context: Context, taskId: String, taskTitle: String, triggerAt: Long) {

@@ -54,11 +54,15 @@ class HomeViewModel(
             set(Calendar.MILLISECOND, 999)
         }.timeInMillis
 
+        val cal = Calendar.getInstance().apply { timeInMillis = now }
+        val minuteOfDay = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+
         val taskMap = td.allTasks.associateBy { it.id }
         val conditionsByTask = cd.allConditions.groupBy { it.taskId }
 
         val dueFreq = td.freqTasks.filter { task ->
             FrequencyChecker.isDueToday(task) &&
+                (task.frequencyTime == null || minuteOfDay >= task.frequencyTime) &&
                 ConditionEvaluator.areAllMet(conditionsByTask[task.id].orEmpty(), taskMap, now)
         }
         val dueFixed = td.fixedTasks.filter { task ->

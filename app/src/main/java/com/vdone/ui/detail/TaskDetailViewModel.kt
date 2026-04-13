@@ -28,6 +28,7 @@ data class TaskDetailUiState(
     val parentId: String? = null,
     val scheduleMode: String = "none",   // "none" | "frequency" | "fixed" | "condition"
     val frequency: String? = null,
+    val frequencyTime: Int? = null,      // minutes from midnight; null = anytime
     val fixedStart: Long? = null,
     val pendingConditions: List<PendingCondition> = emptyList(),
     val isSaved: Boolean = false,
@@ -73,6 +74,7 @@ class TaskDetailViewModel(
                         parentId = task.parentId,
                         scheduleMode = task.scheduleMode,
                         frequency = task.frequency,
+                        frequencyTime = task.frequencyTime,
                         fixedStart = task.fixedStart,
                     )
                 }
@@ -89,6 +91,10 @@ class TaskDetailViewModel(
             frequency = value,
             fixedStart = null,
         )
+    }
+
+    fun setFrequencyTime(value: Int?) {
+        _uiState.value = _uiState.value.copy(frequencyTime = value)
     }
 
     fun setFixedStart(value: Long?) {
@@ -150,6 +156,7 @@ class TaskDetailViewModel(
                     parentId = state.parentId,
                     scheduleMode = state.scheduleMode,
                     frequency = state.frequency,
+                    frequencyTime = state.frequencyTime,
                     fixedStart = state.fixedStart,
                 )
                 state.pendingConditions.forEach { pending ->
@@ -163,6 +170,7 @@ class TaskDetailViewModel(
                         notes = state.notes.trim().ifBlank { null },
                         scheduleMode = state.scheduleMode,
                         frequency = state.frequency,
+                        frequencyTime = state.frequencyTime,
                         fixedStart = state.fixedStart,
                     )
                 )

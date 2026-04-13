@@ -10,6 +10,7 @@ import com.vdone.data.db.MIGRATION_2_3
 import com.vdone.data.db.MIGRATION_3_4
 import com.vdone.data.db.MIGRATION_4_5
 import com.vdone.data.db.MIGRATION_5_6
+import com.vdone.data.db.MIGRATION_6_7
 import com.vdone.data.repository.ConditionRepository
 import com.vdone.data.repository.TaskRepository
 import com.vdone.reminder.AlarmScheduler
@@ -23,7 +24,7 @@ class VDoneApp : Application() {
 
     val database: AppDatabase by lazy {
         Room.databaseBuilder(this, AppDatabase::class.java, "vdone.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
             .build()
     }
 
@@ -62,6 +63,11 @@ class VDoneApp : Application() {
             taskRepository.getFixedTasks().first().forEach { task ->
                 val fireAt = task.fixedStart ?: return@forEach
                 if (fireAt > now) AlarmScheduler.schedule(this@VDoneApp, task)
+            }
+            taskRepository.getFrequencyTasks().first().forEach { task ->
+                if (task.frequencyTime != null && task.status != "done") {
+                    AlarmScheduler.scheduleFrequency(this@VDoneApp, task)
+                }
             }
         }
     }
