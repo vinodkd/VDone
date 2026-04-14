@@ -43,10 +43,11 @@ class MainActivity : ComponentActivity() {
             val nm = getSystemService(NotificationManager::class.java)
             @Suppress("NewApi")
             if (!nm.canUseFullScreenIntent()) {
-                // ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENTS added in API 34
-                val intent = Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENTS")
-                intent.data = android.net.Uri.parse("package:$packageName")
-                startActivity(intent)
+                tryStartActivity(
+                    Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENTS").apply {
+                        data = android.net.Uri.parse("package:$packageName")
+                    }
+                )
             }
         }
     }
@@ -55,8 +56,15 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val am = getSystemService(AlarmManager::class.java)
             if (!am.canScheduleExactAlarms()) {
-                startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                tryStartActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
             }
+        }
+    }
+
+    /** Starts an activity only if something on the device can handle the intent. */
+    private fun tryStartActivity(intent: Intent) {
+        if (packageManager.resolveActivity(intent, 0) != null) {
+            startActivity(intent)
         }
     }
 
