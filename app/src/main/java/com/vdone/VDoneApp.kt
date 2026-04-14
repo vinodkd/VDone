@@ -3,6 +3,8 @@ package com.vdone
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.media.AudioAttributes
+import android.media.RingtoneManager
 import androidx.room.Room
 import com.vdone.data.db.AppDatabase
 import com.vdone.data.db.MIGRATION_1_2
@@ -58,10 +60,24 @@ class VDoneApp : Application() {
             if (existing != null) nm.deleteNotificationChannel(id)
             val ch = NotificationChannel(id, name, NotificationManager.IMPORTANCE_HIGH).apply {
                 description = "Notifications for scheduled tasks"
-                if (!sound) setSound(null, null)
+                if (sound) {
+                    val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    val audioAttr = AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .build()
+                    setSound(alarmUri, audioAttr)
+                } else {
+                    setSound(null, null)
+                }
                 enableVibration(vibrate)
             }
             nm.createNotificationChannel(ch)
+        }
+        // v1 channels used notification stream — delete them so the new alarm-stream
+        // channels below take effect on devices that already have the old ones.
+        listOf("vdone_sv", "vdone_s", "vdone_v", "vdone_silent").forEach {
+            nm.deleteNotificationChannel(it)
         }
         make(CHANNEL_SV,     "Task Reminders",                      sound = true,  vibrate = true)
         make(CHANNEL_S,      "Task Reminders (sound only)",          sound = true,  vibrate = false)
@@ -90,10 +106,10 @@ class VDoneApp : Application() {
     }
 
     companion object {
-        const val CHANNEL_SV     = "vdone_sv"
-        const val CHANNEL_S      = "vdone_s"
-        const val CHANNEL_V      = "vdone_v"
-        const val CHANNEL_SILENT = "vdone_silent"
+        const val CHANNEL_SV     = "vdone_sv2"
+        const val CHANNEL_S      = "vdone_s2"
+        const val CHANNEL_V      = "vdone_v2"
+        const val CHANNEL_SILENT = "vdone_silent2"
         // legacy constant — kept so any stored references still compile
         const val REMINDER_CHANNEL_ID = CHANNEL_SV
 
