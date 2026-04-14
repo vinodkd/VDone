@@ -1,5 +1,11 @@
 package com.vdone.ui.settings
 
+import android.app.AlarmManager
+import android.app.NotificationManager
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,11 +14,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -148,6 +157,112 @@ fun SettingsScreen(onBack: () -> Unit) {
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
+            }
+
+            HorizontalDivider()
+
+            // Permissions
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Permissions", style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    "VDone needs these to deliver reminders reliably. Tap any row to open the relevant Android setting.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                val nm = context.getSystemService(NotificationManager::class.java)
+                val am = context.getSystemService(AlarmManager::class.java)
+
+                val canExactAlarm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                    am.canScheduleExactAlarms() else true
+                val canOverlay = Settings.canDrawOverlays(context)
+                val canFullScreen = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+                    @Suppress("NewApi") nm.canUseFullScreenIntent() else true
+
+                PermissionRow(
+                    label = "Notification sound & vibration",
+                    description = "Alarm sound plays at alarm volume",
+                    granted = true, // channel settings are user-controlled; always show link
+                    showOpenButton = true,
+                ) {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                    )
+                }
+
+                PermissionRow(
+                    label = "Exact alarms",
+                    description = "Required for reminders to fire at the right time",
+                    granted = canExactAlarm,
+                ) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                        if (context.packageManager.resolveActivity(intent, 0) != null)
+                            context.startActivity(intent)
+                    }
+                }
+
+                PermissionRow(
+                    label = "Display over other apps",
+                    description = "Required for full-screen alarm when screen is locked",
+                    granted = canOverlay,
+                ) {
+                    context.startActivity(
+                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:${context.packageName}"))
+                    )
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    PermissionRow(
+                        label = "Full-screen alerts",
+                        description = "Required on Android 14+ for lock-screen alarm",
+                        granted = canFullScreen,
+                    ) {
+                        val fsi = Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENTS").apply {
+                            data = Uri.parse("package:${context.packageName}")
+                        }
+                        val target = if (context.packageManager.resolveActivity(fsi, 0) != null) fsi
+                            else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.parse("package:${context.packageName}"))
+                        context.startActivity(target)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionRow(
+    label: String,
+    description: String,
+    granted: Boolean,
+    showOpenButton: Boolean = false,
+    onOpen: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = if (granted) Icons.Filled.CheckCircle else Icons.Filled.Warning,
+            contentDescription = null,
+            tint = if (granted) MaterialTheme.colorScheme.primary
+                   else MaterialTheme.colorScheme.error,
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyMedium)
+            Text(description, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (!granted || showOpenButton) {
+            OutlinedButton(onClick = onOpen) {
+                Text(if (granted) "Open" else "Fix")
             }
         }
     }
