@@ -6,15 +6,15 @@ Future milestones and ideas, roughly in priority order.
 
 ## Bugs
 
-- **Snooze/edit conflict**: if a task is snoozed and then edited to a fixed time earlier than the snooze time, the snooze alarm fires after the new due time. Need to clear the snooze state and reschedule correctly when the task is saved with a new time.
+- ~~**Snooze/edit conflict**~~: fixed — `updateTask()` now clears `snoozedUntil` on save.
 
 ---
 
-## M10 — Search
+## ~~M10 — Search~~ (done)
 
-- Add a search bar to the All Tasks tab
-- Filter task list by title and notes as the user types
-- Clear button to dismiss search
+- ~~Add a search bar to the All Tasks tab~~
+- ~~Filter task list by title and notes as the user types~~
+- ~~Clear button to dismiss search~~
 
 ---
 
