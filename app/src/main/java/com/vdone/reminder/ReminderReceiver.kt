@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.vdone.AppSettings
 import com.vdone.MainActivity
@@ -37,12 +36,6 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        // On Android 14+, full-screen intents require the USE_FULL_SCREEN_INTENT
-        // permission to be actively granted at the time the notification is posted.
-        val canFullScreen = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            @Suppress("NewApi") nm.canUseFullScreenIntent()
-        } else true
-
         val notification = if (isFollowUp) {
             NotificationCompat.Builder(context, channel)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
@@ -64,19 +57,22 @@ class ReminderReceiver : BroadcastReceiver() {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
-            if (canFullScreen) {
-                val fullScreenIntent = PendingIntent.getActivity(
-                    context,
-                    taskId.hashCode() xor 0x1000,
-                    Intent(context, ReminderActivity::class.java).apply {
-                        putExtra(AlarmScheduler.EXTRA_TASK_ID, taskId)
-                        putExtra(AlarmScheduler.EXTRA_TASK_TITLE, taskTitle)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    },
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-                builder.setFullScreenIntent(fullScreenIntent, true)
-            }
+            // Always set the full-screen intent. On Android 14+, the OS silently
+            // ignores it if the permission isn't granted — unless the alarm was
+            // scheduled via setAlarmClock(), in which case the OS allows it
+            // regardless. Skipping setFullScreenIntent entirely prevents that
+            // exception from ever firing.
+            val fullScreenIntent = PendingIntent.getActivity(
+                context,
+                taskId.hashCode() xor 0x1000,
+                Intent(context, ReminderActivity::class.java).apply {
+                    putExtra(AlarmScheduler.EXTRA_TASK_ID, taskId)
+                    putExtra(AlarmScheduler.EXTRA_TASK_TITLE, taskTitle)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            builder.setFullScreenIntent(fullScreenIntent, true)
             builder.build()
         }
 
