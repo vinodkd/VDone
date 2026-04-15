@@ -27,31 +27,45 @@ class TaskListViewModel(private val repository: TaskRepository) : ViewModel() {
     private val expandedIds = mutableSetOf<String>()
     private val _refreshTick = MutableStateFlow(0)
 
-    val filterMode = MutableStateFlow(FilterMode.ALL)
-    val sortMode   = MutableStateFlow(SortMode.CREATED)
+    val filterMode  = MutableStateFlow(FilterMode.ALL)
+    val sortMode    = MutableStateFlow(SortMode.CREATED)
+    val searchQuery = MutableStateFlow("")
 
     val taskNodesWithRefresh = combine(
         repository.getAllTasks(),
         _refreshTick,
         filterMode,
         sortMode,
-    ) { all, _, filter, sort -> buildTree(all, filter, sort) }
+        searchQuery,
+    ) { all, _, filter, sort, query -> buildTree(all, filter, sort, query) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private fun buildTree(
         all: List<TaskEntity>,
         filter: FilterMode,
         sort: SortMode,
+        query: String,
     ): List<TaskNode> {
         val byParent = all.groupBy { it.parentId }
+        val q = query.trim().lowercase()
 
-        // Apply filter to root tasks; children always follow their parent
+        // Apply filter and search to root tasks; children always follow their parent.
+        // When a search is active, also include roots that have a matching descendant.
+        val matchingIds: Set<String> = if (q.isEmpty()) emptySet() else
+            all.filter { it.title.lowercase().contains(q) || it.notes?.lowercase()?.contains(q) == true }
+               .map { it.id }.toSet()
+
+        fun hasMatchingDescendant(taskId: String): Boolean =
+            (byParent[taskId] ?: emptyList()).any { it.id in matchingIds || hasMatchingDescendant(it.id) }
+
         val roots = (byParent[null] ?: emptyList()).filter { task ->
-            when (filter) {
+            val passesFilter = when (filter) {
                 FilterMode.ALL  -> true
                 FilterMode.TODO -> task.status != "done"
                 FilterMode.DONE -> task.status == "done"
             }
+            val passesSearch = q.isEmpty() || task.id in matchingIds || hasMatchingDescendant(task.id)
+            passesFilter && passesSearch
         }.sortedWith(compareBy { task ->
             when (sort) {
                 SortMode.CREATED -> task.createdAt
@@ -75,6 +89,8 @@ class TaskListViewModel(private val repository: TaskRepository) : ViewModel() {
         roots.forEach { visit(it, 0) }
         return result
     }
+
+    fun setSearchQuery(q: String) { searchQuery.value = q }
 
     fun toggleExpanded(taskId: String) {
         if (taskId in expandedIds) expandedIds.remove(taskId) else expandedIds.add(taskId)

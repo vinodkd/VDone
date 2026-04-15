@@ -80,7 +80,8 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
     }
 
     suspend fun updateTask(task: TaskEntity) {
-        val updated = task.copy(updatedAt = System.currentTimeMillis())
+        // Editing a task invalidates any active snooze — the new schedule takes over.
+        val updated = task.copy(updatedAt = System.currentTimeMillis(), snoozedUntil = null)
         dao.update(updated)
         when {
             updated.scheduleMode == "fixed" && updated.fixedStart != null ->
