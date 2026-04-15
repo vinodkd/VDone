@@ -9,6 +9,7 @@ import com.vdone.data.repository.ConditionRepository
 import com.vdone.data.repository.TaskRepository
 import com.vdone.scheduler.ConditionEvaluator
 import com.vdone.scheduler.FrequencyChecker
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -33,6 +34,17 @@ class HomeViewModel(
 ) : ViewModel() {
 
     private val refreshTick = MutableStateFlow(0)
+
+    init {
+        // Recompute the due-task list every minute so overdue tasks appear
+        // without the user having to navigate away and back.
+        viewModelScope.launch {
+            while (true) {
+                delay(60_000)
+                refreshTick.value++
+            }
+        }
+    }
 
     private val taskData = combine(
         repository.getFrequencyTasks(),
