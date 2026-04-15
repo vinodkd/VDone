@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.vdone.AppSettings
-import com.vdone.MainActivity
 import com.vdone.VDoneApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,10 +26,13 @@ class ReminderReceiver : BroadcastReceiver() {
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        // Tapping the notification opens ReminderActivity so the user can snooze or mark done.
         val openIntent = PendingIntent.getActivity(
             context,
             taskId.hashCode(),
-            Intent(context, MainActivity::class.java).apply {
+            Intent(context, ReminderActivity::class.java).apply {
+                putExtra(AlarmScheduler.EXTRA_TASK_ID, taskId)
+                putExtra(AlarmScheduler.EXTRA_TASK_TITLE, taskTitle)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
