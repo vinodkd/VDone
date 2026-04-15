@@ -8,6 +8,14 @@ import android.os.Build
 import com.vdone.data.db.TaskEntity
 import java.util.Calendar
 
+// Opens the app's task list — shown when the user taps the status-bar alarm icon.
+private fun showIntent(context: Context): PendingIntent =
+    PendingIntent.getActivity(
+        context, 0,
+        context.packageManager.getLaunchIntentForPackage(context.packageName),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
 object AlarmScheduler {
 
     const val EXTRA_TASK_ID = "task_id"
@@ -21,9 +29,8 @@ object AlarmScheduler {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) return
 
-        am.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            triggerAt,
+        am.setAlarmClock(
+            AlarmManager.AlarmClockInfo(triggerAt, showIntent(context)),
             pendingIntent(context, task.id, task.title),
         )
     }
@@ -45,7 +52,10 @@ object AlarmScheduler {
     fun scheduleAt(context: Context, taskId: String, taskTitle: String, triggerAt: Long) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) return
-        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent(context, taskId, taskTitle))
+        am.setAlarmClock(
+            AlarmManager.AlarmClockInfo(triggerAt, showIntent(context)),
+            pendingIntent(context, taskId, taskTitle),
+        )
     }
 
     fun cancel(context: Context, taskId: String) {
