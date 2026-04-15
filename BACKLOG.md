@@ -30,6 +30,10 @@ Future milestones and ideas, roughly in priority order.
 
 ## Ideas / Unscoped
 
+- **HomeViewModel tick optimization**: current `while(true)/delay(60s)` runs for the ViewModel lifetime even when the home screen isn't visible. Low-priority alternative: replace with a `tickerFlow` combined into `dueTasks` via `SharingStarted.WhileSubscribed` so it only ticks while the screen is actually showing.
+
+
+
 - iOS app
 - Cloud sync / backup
 - Widget (home screen task glance)
