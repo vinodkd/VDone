@@ -2,6 +2,7 @@ package com.vdone.ui.settings
 
 import android.app.AlarmManager
 import android.app.NotificationManager
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -176,7 +177,6 @@ fun SettingsScreen(onBack: () -> Unit) {
 
                 val nm = context.getSystemService(NotificationManager::class.java)
                 val am = context.getSystemService(AlarmManager::class.java)
-
                 val canExactAlarm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
                     am.canScheduleExactAlarms() else true
                 val canOverlay = Settings.canDrawOverlays(context)
@@ -210,7 +210,7 @@ fun SettingsScreen(onBack: () -> Unit) {
 
                 PermissionRow(
                     label = "Display over other apps",
-                    description = "Required for full-screen alarm when screen is locked",
+                    description = "Allows the alarm screen to appear over the lock screen",
                     granted = canOverlay,
                 ) {
                     context.startActivity(
@@ -225,13 +225,21 @@ fun SettingsScreen(onBack: () -> Unit) {
                         description = "Required on Android 14+ for lock-screen alarm",
                         granted = canFullScreen,
                     ) {
-                        val fsi = Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENTS").apply {
-                            data = Uri.parse("package:${context.packageName}")
+                        // Use try/catch rather than resolveActivity — on Android 12+,
+                        // package visibility rules can make resolveActivity() return null
+                        // even when the intent is actually handleable.
+                        try {
+                            context.startActivity(
+                                Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENTS").apply {
+                                    data = Uri.parse("package:${context.packageName}")
+                                }
+                            )
+                        } catch (_: ActivityNotFoundException) {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.parse("package:${context.packageName}"))
+                            )
                         }
-                        val target = if (context.packageManager.resolveActivity(fsi, 0) != null) fsi
-                            else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.parse("package:${context.packageName}"))
-                        context.startActivity(target)
                     }
                 }
             }

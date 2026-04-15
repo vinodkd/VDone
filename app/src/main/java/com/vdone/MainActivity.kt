@@ -45,11 +45,16 @@ class MainActivity : ComponentActivity() {
             val nm = getSystemService(NotificationManager::class.java)
             @Suppress("NewApi")
             if (!nm.canUseFullScreenIntent()) {
-                tryStartActivity(
-                    Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENTS").apply {
-                        data = android.net.Uri.parse("package:$packageName")
-                    }
-                )
+                try {
+                    startActivity(
+                        Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENTS").apply {
+                            data = android.net.Uri.parse("package:$packageName")
+                        }
+                    )
+                } catch (_: android.content.ActivityNotFoundException) {
+                    // Device doesn't have this settings page (some OEM builds);
+                    // user can grant it via Settings → Permissions in the app.
+                }
             }
         }
     }
