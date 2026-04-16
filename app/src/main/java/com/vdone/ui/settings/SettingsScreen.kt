@@ -26,9 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -43,13 +40,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.vdone.AppSettings
 
-private val SNOOZE_OPTIONS = listOf(5, 10, 15, 30)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    var snoozeMinutes by remember { mutableStateOf(AppSettings.getSnoozeMinutes(context)) }
     var reminderSound by remember { mutableStateOf(AppSettings.isReminderSound(context)) }
     var reminderVibrate by remember { mutableStateOf(AppSettings.isReminderVibrate(context)) }
     var showMode by remember { mutableStateOf(AppSettings.isShowMode(context)) }
@@ -74,27 +68,6 @@ fun SettingsScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            // Snooze duration
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Snooze duration", style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    SNOOZE_OPTIONS.forEachIndexed { index, minutes ->
-                        SegmentedButton(
-                            selected = snoozeMinutes == minutes,
-                            onClick = {
-                                snoozeMinutes = minutes
-                                AppSettings.setSnoozeMinutes(context, minutes)
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(index, SNOOZE_OPTIONS.size),
-                            label = { Text("${minutes}m") },
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider()
-
             // Sound / vibration
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Reminders", style = MaterialTheme.typography.titleSmall,

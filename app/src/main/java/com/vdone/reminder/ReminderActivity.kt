@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import com.vdone.AppSettings
 import com.vdone.VDoneApp
 import com.vdone.ui.theme.VDoneTheme
 import kotlinx.coroutines.launch
@@ -90,28 +89,34 @@ class ReminderActivity : ComponentActivity() {
                                 color = MaterialTheme.colorScheme.onErrorContainer,
                                 textAlign = TextAlign.Center,
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                OutlinedButton(onClick = {
-                                    val snoozeMinutes = AppSettings.getSnoozeMinutes(this@ReminderActivity)
-                                    val snoozeAt = System.currentTimeMillis() + snoozeMinutes * 60_000L
-                                    AlarmScheduler.scheduleAt(this@ReminderActivity, taskId, taskTitle, snoozeAt)
-                                    lifecycleScope.launch {
-                                        repository.setSnooze(taskId, snoozeAt)
+                            // Snooze options
+                            Text(
+                                "Snooze",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf(5, 10, 15, 30).forEach { minutes ->
+                                    OutlinedButton(onClick = {
+                                        val snoozeAt = System.currentTimeMillis() + minutes * 60_000L
+                                        AlarmScheduler.scheduleAt(this@ReminderActivity, taskId, taskTitle, snoozeAt)
+                                        lifecycleScope.launch { repository.setSnooze(taskId, snoozeAt) }
+                                        finish()
+                                    }) {
+                                        Text("${minutes}m")
                                     }
-                                    finish()
-                                }) {
-                                    val snoozeMinutes = AppSettings.getSnoozeMinutes(this@ReminderActivity)
-                                    Text("Snooze ${snoozeMinutes}m")
                                 }
-                                Button(onClick = {
+                            }
+                            Button(
+                                onClick = {
                                     lifecycleScope.launch {
                                         val task = repository.getTaskById(taskId)
                                         if (task != null) repository.toggleStatus(task)
                                         finish()
                                     }
-                                }) {
-                                    Text("Done")
-                                }
+                                },
+                            ) {
+                                Text("Done")
                             }
                         }
                     }

@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -39,6 +41,7 @@ import com.vdone.data.db.TaskEntity
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    onAddTask: () -> Unit,
     onEditTask: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
 ) {
@@ -63,6 +66,11 @@ fun HomeScreen(
                     }
                 },
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddTask) {
+                Icon(Icons.Default.Add, contentDescription = "Add task")
+            }
         },
     ) { padding ->
         if (dueTasks.isEmpty()) {

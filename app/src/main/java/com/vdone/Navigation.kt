@@ -91,6 +91,7 @@ fun VDoneNavHost(repository: TaskRepository, conditionRepository: ConditionRepos
                 )
                 HomeScreen(
                     viewModel = vm,
+                    onAddTask = { rootNav.navigate("detail/$NEW") },
                     onEditTask = { id -> rootNav.navigate("detail/$id") },
                     onNavigateToSettings = { rootNav.navigate("settings") },
                 )
