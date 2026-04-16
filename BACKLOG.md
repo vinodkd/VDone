@@ -18,7 +18,25 @@ Future milestones and ideas, roughly in priority order.
 
 ---
 
-## M11 — Google Play Store
+## M11 — Schedule mode UI + days-of-week recurring
+
+- Replace 4-option segmented button for schedule mode with a dropdown (ExposedDropdownMenuBox) — "Conditional" label is too wide for a segmented slot
+- Add days-of-week picker for recurring tasks (Mon–Sun checkboxes; "weekdays" shortcut)
+  - New `frequencyDays` DB column (bitmask or comma-separated) — needs migration
+  - Update FrequencyChecker to match selected days
+  - Update AlarmScheduler to fire on the next matching day
+
+---
+
+## M12 — Home screen widget
+
+- AppWidget using Jetpack Glance showing next due tasks
+- Tap a task to open it; tap + to go straight to task creation
+- Needs AppWidgetProvider, Glance layout, manifest registration, RemoteViews data loading
+
+---
+
+## M13 — Google Play Store
 
 - Create a Play developer account
 - Generate a release keystore (replace debug-signed APK)
@@ -30,11 +48,7 @@ Future milestones and ideas, roughly in priority order.
 
 ## Ideas / Unscoped
 
-- **HomeViewModel tick optimization**: current `while(true)/delay(60s)` runs for the ViewModel lifetime even when the home screen isn't visible. Low-priority alternative: replace with a `tickerFlow` combined into `dueTasks` via `SharingStarted.WhileSubscribed` so it only ticks while the screen is actually showing.
-
-
-
+- **HomeViewModel tick optimization**: replace `while(true)/delay(60s)` with a `tickerFlow` combined via `SharingStarted.WhileSubscribed` so it only ticks while the home screen is visible.
 - iOS app
 - Cloud sync / backup
-- Widget (home screen task glance)
 - Natural-language task entry ("remind me to call dentist tomorrow at 9am")
