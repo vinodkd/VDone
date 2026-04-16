@@ -269,7 +269,7 @@ private fun ScheduleSection(
                 .fillMaxWidth()
                 .padding(top = 8.dp)
         ) {
-            listOf("None", "Recurring", "On date", "Conditional").forEachIndexed { index, label ->
+            listOf("None", "Recurring", "Fixed", "Cond").forEachIndexed { index, label ->
                 SegmentedButton(
                     selected = modeIndex == index,
                     onClick = {
