@@ -16,10 +16,12 @@ import com.vdone.data.db.MIGRATION_6_7
 import com.vdone.data.db.MIGRATION_7_8
 import com.vdone.data.db.MIGRATION_8_9
 import com.vdone.data.db.MIGRATION_9_10
+import com.vdone.data.db.MIGRATION_10_11
 import com.vdone.data.repository.ConditionRepository
 import com.vdone.data.repository.TaskRepository
 import com.vdone.reminder.AlarmScheduler
 import com.vdone.scheduler.SchedulerWorker
+import com.vdone.widget.DueTasksWidgetWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -29,7 +31,7 @@ class VDoneApp : Application() {
 
     val database: AppDatabase by lazy {
         Room.databaseBuilder(this, AppDatabase::class.java, "vdone.db")
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
             .build()
     }
 
@@ -45,6 +47,7 @@ class VDoneApp : Application() {
         super.onCreate()
         createNotificationChannels()
         SchedulerWorker.schedule(this)
+        DueTasksWidgetWorker.schedule(this)
         rescheduleAlarms()
     }
 

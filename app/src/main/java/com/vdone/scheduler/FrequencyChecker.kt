@@ -10,16 +10,25 @@ import java.util.Calendar
 object FrequencyChecker {
 
     fun isDueToday(task: TaskEntity, now: Long = System.currentTimeMillis()): Boolean {
+        // For daily tasks with a days filter, skip days not selected.
+        if (task.frequency == "daily") {
+            val days = task.frequencyDays ?: 0
+            if (days != 0 && !isDayBitSet(days, calOf(now).get(Calendar.DAY_OF_WEEK))) return false
+        }
+
         val lastCompleted = task.lastCompletedAt ?: return true  // never done → always due
 
         return when (task.frequency) {
-            "daily" -> !sameDay(lastCompleted, now)
-            "weekly" -> !sameWeek(lastCompleted, now)
+            "daily"   -> !sameDay(lastCompleted, now)
+            "weekly"  -> !sameWeek(lastCompleted, now)
             "monthly" -> !sameMonth(lastCompleted, now)
-            "yearly" -> !sameYear(lastCompleted, now)
+            "yearly"  -> !sameYear(lastCompleted, now)
             else -> false
         }
     }
+
+    /** True if the Calendar.DAY_OF_WEEK value [dow] is set in the bitmask [days]. */
+    fun isDayBitSet(days: Int, dow: Int): Boolean = days and (1 shl (dow - 1)) != 0
 
     private fun calOf(ms: Long): Calendar = Calendar.getInstance().apply { timeInMillis = ms }
 

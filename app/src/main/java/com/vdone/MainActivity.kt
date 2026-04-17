@@ -14,9 +14,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
 import com.vdone.ui.theme.VDoneTheme
 
 class MainActivity : ComponentActivity() {
+
+    private var navController: NavController? = null
 
     private val requestPermissions = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -35,9 +38,26 @@ class MainActivity : ComponentActivity() {
                 VDoneNavHost(
                     repository = app.taskRepository,
                     conditionRepository = app.conditionRepository,
+                    initialRoute = widgetRoute(intent),
+                    onNavControllerReady = { navController = it },
                 )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val route = widgetRoute(intent) ?: return
+        navController?.navigate(route)
+    }
+
+    /** Translates a vdone://open/detail/{id} URI to a nav route, or null if not a widget intent. */
+    private fun widgetRoute(intent: Intent?): String? {
+        val uri = intent?.data ?: return null
+        if (uri.scheme != "vdone") return null
+        val segments = uri.pathSegments
+        if (segments.size >= 2 && segments[0] == "detail") return "detail/${segments[1]}"
+        return null
     }
 
     private fun requestFullScreenIntentPermission() {

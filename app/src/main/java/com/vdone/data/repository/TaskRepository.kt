@@ -4,6 +4,7 @@ import android.content.Context
 import com.vdone.data.db.TaskDao
 import com.vdone.data.db.TaskEntity
 import com.vdone.reminder.AlarmScheduler
+import com.vdone.widget.DueTasksWidget
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
@@ -29,6 +30,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         parentId: String? = null,
         scheduleMode: String = "none",
         frequency: String? = null,
+        frequencyDays: Int? = null,
         frequencyTime: Int? = null,
         fixedStart: Long? = null,
         waitingOn: String? = null,
@@ -36,7 +38,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
     ) {
         createTaskWithId(
             UUID.randomUUID().toString(), title, notes, parentId,
-            scheduleMode, frequency, frequencyTime, fixedStart, waitingOn, followUpAt,
+            scheduleMode, frequency, frequencyDays, frequencyTime, fixedStart, waitingOn, followUpAt,
         )
     }
 
@@ -47,6 +49,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         parentId: String? = null,
         scheduleMode: String = "none",
         frequency: String? = null,
+        frequencyDays: Int? = null,
         frequencyTime: Int? = null,
         fixedStart: Long? = null,
         waitingOn: String? = null,
@@ -61,6 +64,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
             parentId = parentId,
             scheduleMode = scheduleMode,
             frequency = frequency,
+            frequencyDays = frequencyDays,
             frequencyTime = frequencyTime,
             fixedStart = fixedStart,
             lastCompletedAt = null,
@@ -77,6 +81,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
             scheduleMode == "frequency" && frequencyTime != null -> AlarmScheduler.scheduleFrequency(context, entity)
         }
         if (followUpAt != null) AlarmScheduler.scheduleFollowUp(context, entity)
+        DueTasksWidget.refresh(context)
     }
 
     suspend fun updateTask(task: TaskEntity) {
@@ -92,6 +97,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         }
         if (updated.followUpAt != null) AlarmScheduler.scheduleFollowUp(context, updated)
         else AlarmScheduler.cancelFollowUp(context, task.id)
+        DueTasksWidget.refresh(context)
     }
 
     suspend fun toggleStatus(task: TaskEntity) {
@@ -101,6 +107,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
             AlarmScheduler.cancel(context, task.id)
             AlarmScheduler.cancelFollowUp(context, task.id)
         }
+        DueTasksWidget.refresh(context)
     }
 
     suspend fun updateLastRemindedAt(taskId: String, remindedAt: Long) {

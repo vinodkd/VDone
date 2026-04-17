@@ -28,6 +28,7 @@ data class TaskDetailUiState(
     val parentId: String? = null,
     val scheduleMode: String = "none",   // "none" | "frequency" | "fixed" | "condition"
     val frequency: String? = null,
+    val frequencyDays: Int? = null,      // bitmask; null/0 = all days (only used for daily)
     val frequencyTime: Int? = null,      // minutes from midnight; null = anytime
     val fixedStart: Long? = null,
     val pendingConditions: List<PendingCondition> = emptyList(),
@@ -77,6 +78,7 @@ class TaskDetailViewModel(
                         parentId = task.parentId,
                         scheduleMode = task.scheduleMode,
                         frequency = task.frequency,
+                        frequencyDays = task.frequencyDays,
                         frequencyTime = task.frequencyTime,
                         fixedStart = task.fixedStart,
                         waitingOn = task.waitingOn ?: "",
@@ -95,8 +97,14 @@ class TaskDetailViewModel(
         _uiState.value = _uiState.value.copy(
             scheduleMode = if (value != null) "frequency" else "none",
             frequency = value,
+            // days filter only applies to daily; clear when switching to another frequency
+            frequencyDays = if (value == "daily") _uiState.value.frequencyDays else null,
             fixedStart = null,
         )
+    }
+
+    fun setFrequencyDays(value: Int?) {
+        _uiState.value = _uiState.value.copy(frequencyDays = value)
     }
 
     fun setFrequencyTime(value: Int?) {
@@ -159,6 +167,15 @@ class TaskDetailViewModel(
         }
     }
 
+    fun markDone() {
+        val id = taskId ?: return
+        viewModelScope.launch {
+            val task = repository.getTaskById(id) ?: return@launch
+            repository.toggleStatus(task)
+            _uiState.value = _uiState.value.copy(isSaved = true)
+        }
+    }
+
     fun toggleSubtaskStatus(subtask: TaskEntity) {
         viewModelScope.launch { repository.toggleStatus(subtask) }
     }
@@ -180,6 +197,7 @@ class TaskDetailViewModel(
                     parentId = state.parentId,
                     scheduleMode = state.scheduleMode,
                     frequency = state.frequency,
+                    frequencyDays = state.frequencyDays,
                     frequencyTime = state.frequencyTime,
                     fixedStart = state.fixedStart,
                     waitingOn = state.waitingOn.trim().ifBlank { null },
@@ -196,6 +214,7 @@ class TaskDetailViewModel(
                         notes = state.notes.trim().ifBlank { null },
                         scheduleMode = state.scheduleMode,
                         frequency = state.frequency,
+                        frequencyDays = state.frequencyDays,
                         frequencyTime = state.frequencyTime,
                         fixedStart = state.fixedStart,
                         waitingOn = state.waitingOn.trim().ifBlank { null },

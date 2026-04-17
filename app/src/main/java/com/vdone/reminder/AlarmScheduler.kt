@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.vdone.data.db.TaskEntity
+import com.vdone.scheduler.FrequencyChecker
 import java.util.Calendar
 
 // Opens the app's task list — shown when the user taps the status-bar alarm icon.
@@ -37,6 +38,7 @@ object AlarmScheduler {
 
     fun scheduleFrequency(context: Context, task: TaskEntity) {
         val minuteOfDay = task.frequencyTime ?: return
+        val days = task.frequencyDays ?: 0
         val now = System.currentTimeMillis()
         val cal = Calendar.getInstance().apply {
             timeInMillis = now
@@ -46,6 +48,14 @@ object AlarmScheduler {
             set(Calendar.MILLISECOND, 0)
         }
         if (cal.timeInMillis <= now) cal.add(Calendar.DAY_OF_YEAR, 1)
+        // If specific days are configured, advance to the next matching day (max 7 attempts).
+        if (days != 0) {
+            var attempts = 0
+            while (attempts < 7 && !FrequencyChecker.isDayBitSet(days, cal.get(Calendar.DAY_OF_WEEK))) {
+                cal.add(Calendar.DAY_OF_YEAR, 1)
+                attempts++
+            }
+        }
         scheduleAt(context, task.id, task.title, cal.timeInMillis)
     }
 

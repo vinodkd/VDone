@@ -104,7 +104,14 @@ fun TaskDetailScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                actions = {
+                    if (!uiState.isNew) {
+                        IconButton(onClick = { viewModel.markDone() }) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = "Mark done")
+                        }
+                    }
+                },
             )
         },
         floatingActionButton = {
@@ -152,6 +159,7 @@ fun TaskDetailScreen(
                 ScheduleSection(
                     scheduleMode = uiState.scheduleMode,
                     frequency = uiState.frequency,
+                    frequencyDays = uiState.frequencyDays,
                     frequencyTime = uiState.frequencyTime,
                     fixedStart = uiState.fixedStart,
                     savedConditions = savedConditions,
@@ -159,6 +167,7 @@ fun TaskDetailScreen(
                     allTasks = allTasks.filter { it.id != taskId && it.parentId == null },
                     onSetScheduleMode = { viewModel.setScheduleMode(it) },
                     onSetFrequency = { viewModel.setFrequency(it) },
+                    onSetFrequencyDays = { viewModel.setFrequencyDays(it) },
                     onSetFrequencyTime = { viewModel.setFrequencyTime(it) },
                     onSetFixedStart = { viewModel.setFixedStart(it) },
                     onAddCondition = { type, refTaskId -> viewModel.addCondition(type, refTaskId) },
@@ -216,6 +225,7 @@ private fun localToUtcMidnight(localMs: Long): Long {
 private fun ScheduleSection(
     scheduleMode: String,
     frequency: String?,
+    frequencyDays: Int?,
     frequencyTime: Int?,
     fixedStart: Long?,
     savedConditions: List<ConditionEntity>,
@@ -223,6 +233,7 @@ private fun ScheduleSection(
     allTasks: List<TaskEntity>,
     onSetScheduleMode: (String) -> Unit,
     onSetFrequency: (String?) -> Unit,
+    onSetFrequencyDays: (Int?) -> Unit,
     onSetFrequencyTime: (Int?) -> Unit,
     onSetFixedStart: (Long?) -> Unit,
     onAddCondition: (type: String, refTaskId: String?) -> Unit,
@@ -298,6 +309,12 @@ private fun ScheduleSection(
                         label = { Text(freq.replaceFirstChar { it.uppercase() }) },
                     )
                 }
+            }
+            if (frequency == "daily") {
+                DaysPicker(
+                    days = frequencyDays ?: 0,
+                    onDaysChange = { onSetFrequencyDays(if (it == 0) null else it) },
+                )
             }
             Row(
                 modifier = Modifier
@@ -759,6 +776,41 @@ private fun WaitingOnSection(
                         }) { Text("OK") }
                     }
                 }
+            }
+        }
+    }
+}
+
+// Calendar.DAY_OF_WEEK: Sun=1..Sat=7; bitmask bit = 1 shl (dow-1)
+private val DAY_LABELS = listOf("Su", "M", "T", "W", "Th", "F", "S")
+private val WEEKDAYS_MASK = (2..6).fold(0) { acc, dow -> acc or (1 shl (dow - 1)) } // Mon–Fri = 62
+
+@Composable
+private fun DaysPicker(days: Int, onDaysChange: (Int) -> Unit) {
+    Column(modifier = Modifier.padding(top = 4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            DAY_LABELS.forEachIndexed { idx, label ->
+                val dow = idx + 1  // Calendar.DAY_OF_WEEK is 1-based
+                val bit = 1 shl (dow - 1)
+                val selected = days != 0 && (days and bit != 0)
+                FilterChip(
+                    selected = selected,
+                    onClick = {
+                        val toggled = if (selected) days and bit.inv() else days or bit
+                        onDaysChange(if (toggled == 127) 0 else toggled)  // 127 = all days = same as null
+                    },
+                    label = { Text(label, maxLines = 1) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { onDaysChange(WEEKDAYS_MASK) }) { Text("Weekdays") }
+            if (days != 0) {
+                TextButton(onClick = { onDaysChange(0) }) { Text("All days") }
             }
         }
     }
