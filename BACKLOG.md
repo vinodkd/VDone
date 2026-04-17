@@ -18,21 +18,21 @@ Future milestones and ideas, roughly in priority order.
 
 ---
 
-## M11 — Schedule mode UI + days-of-week recurring
+## ~~M11 — Days-of-week recurring tasks~~ (done)
 
-- Replace 4-option segmented button for schedule mode with a dropdown (ExposedDropdownMenuBox) — "Conditional" label is too wide for a segmented slot
-- Add days-of-week picker for recurring tasks (Mon–Sun checkboxes; "weekdays" shortcut)
-  - New `frequencyDays` DB column (bitmask or comma-separated) — needs migration
-  - Update FrequencyChecker to match selected days
-  - Update AlarmScheduler to fire on the next matching day
+- ~~Add days-of-week picker for daily recurring tasks (Su M T W Th F S chips + Weekdays shortcut)~~
+- ~~New `frequencyDays` bitmask DB column (migration 10→11)~~
+- ~~FrequencyChecker respects selected days~~
+- ~~AlarmScheduler advances to next matching day~~
 
 ---
 
-## M12 — Home screen widget
+## ~~M12 — Home screen widget~~ (done)
 
-- AppWidget using Jetpack Glance showing next due tasks
-- Tap a task to open it; tap + to go straight to task creation
-- Needs AppWidgetProvider, Glance layout, manifest registration, RemoteViews data loading
+- ~~Jetpack Glance widget showing up to 5 tasks due today~~
+- ~~Tap task → opens edit screen; tap + → new task~~
+- ~~Refreshes immediately on task create/update/toggle~~
+- ~~Mark Done button added to task detail screen~~
 
 ---
 
