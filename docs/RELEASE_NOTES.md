@@ -1,70 +1,35 @@
-# VDone v1.0 — Release Notes
-
-## What is VDone?
-
-A todo app for procrastinators. No rigid deadlines required. Intrusive reminders that actually interrupt you. Flexible scheduling — fixed times, recurring tasks, condition-based triggers, and open-loop tracking for things you're waiting on.
-
-## How to install
-
-VDone is not on the Play Store yet. See the [installation instructions](https://vinodkd.github.io/VDone/#installing-the-apk) on the website, or the short version:
-
-1. Download `vdone.apk` from this release
-2. On your Android device: **Settings → Apps → Special app access → Install unknown apps** → allow your browser or file manager
-3. Open the APK and tap Install
-4. On first launch, grant the three permissions it asks for (notifications, exact alarms, full-screen intents) — all are needed for reminders to work
-
-> **Tested on Android 14.** Should work on Android 8+ (API 26+).
+# VDone — Release Notes
 
 ---
 
-## What's in v1.0
+## v1.1
 
-Nine milestones from empty project to this release:
+**Search, days-of-week scheduling, and home screen widget**
 
-**Core task management**
+- **Search** — filter any task by title or notes from the All Tasks tab
+- **Days-of-week** — daily recurring tasks can now be restricted to specific days (e.g. weekdays only); day picker on the task edit screen
+- **Home screen widget** — shows up to 5 tasks due today; tap a task to open it, tap + to add a new one; updates immediately when tasks change
+- **Mark done from detail** — checkmark button in the task edit screen top bar
+- **Inline snooze options** — 5 / 10 / 15 / 30 min buttons directly on the alarm screen (snooze duration preference removed from Settings)
+- **+ button on Next Tasks** — add a task without switching tabs
+- Fixed: editing a snoozed task no longer leaves a stale snooze in effect
+- Fixed: notification sound now routes through alarm volume (bypasses Do Not Disturb)
+- Fixed: full-screen alarm now works correctly on Android 14 OEM devices (OnePlus, Samsung)
+
+---
+
+## v1.0
+
+**Initial release**
+
 - Create, edit, delete tasks with optional notes
-- Nested tasks (subtasks) to arbitrary depth with progress tracking
-- Task status: todo / done
-
-**Scheduling**
-- Fixed date/time tasks with exact alarms
-- Recurring tasks (daily / weekly / monthly / yearly), optionally at a specific time of day
-- Condition-based tasks: start after another task completes, before one starts, or after a named event (e.g. "after breakfast")
-
-**Reminders**
-- Full-screen alert with Snooze / Done when device is locked
-- High-priority heads-up notification when screen is on
-- Configurable snooze duration: 5 / 10 / 15 / 30 minutes
-- Sound and vibration toggleable independently in Settings
-- **Show mode**: suppress all alarms globally while at a gig or event; resume with one tap
+- Nested tasks (subtasks) to arbitrary depth
+- Scheduling: fixed date/time, recurring (daily/weekly/monthly/yearly, optionally at a time of day), condition-based (after task done, before task starts)
+- Full-screen alarm when device is locked; heads-up notification when screen is on
+- Snooze and configurable sound/vibration
+- Show mode: suppress all alarms globally
+- Open loops: "waiting on" field with follow-up reminder
+- Loops tab, All Tasks tab (filter/sort), Next Tasks tab
 - Alarms survive device reboots
 
-**Open loops**
-- Mark a task as "waiting on someone" with a free-text note
-- Set a follow-up date for a nudge reminder
-- Dedicated Loops tab lists all open loops sorted by follow-up date
-- Clear or complete directly from the Loops tab
-
-**Task list polish**
-- Filter by All / Todo / Done
-- Sort by Date created / Title / Due date
-- Snoozed tasks show "Snoozed until HH:mm" on their card
-
----
-
-## A note on how this was built
-
-The code was written by [Claude Code](https://claude.ai/code). The intent, design, and product decisions were made by a human. Nine milestones, conversational sessions, no code written by hand.
-
-This is both a working app and an experiment in how far AI-assisted development can go on a non-trivial Android project — real background services, exact alarms, Room migrations, Jetpack Compose UI.
-
-Everything is local only. No account, no tracking, no data leaves your device.
-
----
-
-## Known limitations
-
-- Debug-signed APK (not Play Store signed) — safe to install but you may see a warning
-- Full-screen alert only launches when the screen is off/locked; heads-up notification shown otherwise (this is Android OS behaviour, not a bug)
-- No cloud sync, no iOS app — both planned for future versions
-- Condition-based tasks require the app to run in the background periodically for evaluation (WorkManager, ~15 min interval)
+> How it was built: code written by [Claude Code](https://claude.ai/code); product decisions by a human. No code written by hand. Everything is local — no account, no tracking.
