@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.vdone.AppSettings
+import com.vdone.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -216,6 +217,14 @@ fun SettingsScreen(onBack: () -> Unit) {
                     }
                 }
             }
+
+            HorizontalDivider()
+
+            Text(
+                "VDone ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

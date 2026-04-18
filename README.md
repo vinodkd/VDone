@@ -6,11 +6,13 @@ VDone is a todo application for procrastinators. It also helps people do repetit
 
 - **Flexible scheduling** — tasks can be unscheduled, fixed date/time, recurring (daily/weekly/monthly/yearly, optionally on specific days of the week), or condition-based (after another task is done, before one starts, after a named event)
 - **Intrusive reminders** — full-screen alarm when the device is locked; heads-up notification when the screen is on; survives reboots
-- **Snooze** — 5 / 10 / 15 / 30 minute options directly on the alarm screen
+- **Snooze** — 5 / 10 / 15 minute options directly on the alarm screen
+- **Defer to task** — on the alarm screen, pick a task you're doing instead; the reminder comes back when that task is marked done
 - **Open loops** — mark a task "waiting on someone" with a follow-up reminder date
 - **Nested tasks** — subtasks to arbitrary depth
 - **Home screen widget** — see next due tasks without opening the app; tap to open, + to add
 - **Search** — filter any task by title or notes
+- **Days-of-week** — recurring tasks can be restricted to specific days (e.g. weekdays only)
 - Sound and vibration toggleable independently
 
 ## Install
@@ -22,7 +24,7 @@ VDone is not on the Play Store yet. To sideload:
 3. Open the APK and tap Install
 4. On first launch, grant the permissions it requests (notifications, exact alarms, full-screen intents) — all required for reminders to work
 
-Tested on Android 14. Requires Android 8+ (API 26+).
+Current version: **1.0.18**. Tested on Android 14. Requires Android 8+ (API 26+).
 
 ## How it was built
 

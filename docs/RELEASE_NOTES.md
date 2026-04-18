@@ -2,7 +2,19 @@
 
 ---
 
-## v1.1
+## v1.0.18
+
+**Alarm improvements and defer-to-task**
+
+- **Defer to task** — on the alarm screen, instead of snoozing by time, pick a task you're currently doing; the alarm re-surfaces automatically when that task is marked done. "Other task at HH:MM" creates a placeholder you can rename later.
+- **Reliable full-screen alarm** — alarm now uses a persistent foreground service so audio loops and the notification stays visible until explicitly dismissed, even on OEM devices (OnePlus tested)
+- **Lock screen notification** — notification now visible on lock screen on Android 14
+- **Snooze simplified** — 5 / 10 / 15 min options; 30 min removed
+- **Version shown in Settings**
+
+---
+
+## v1.0.12 — v1.0.17
 
 **Search, days-of-week scheduling, and home screen widget**
 
@@ -10,15 +22,13 @@
 - **Days-of-week** — daily recurring tasks can now be restricted to specific days (e.g. weekdays only); day picker on the task edit screen
 - **Home screen widget** — shows up to 5 tasks due today; tap a task to open it, tap + to add a new one; updates immediately when tasks change
 - **Mark done from detail** — checkmark button in the task edit screen top bar
-- **Inline snooze options** — 5 / 10 / 15 / 30 min buttons directly on the alarm screen (snooze duration preference removed from Settings)
 - **+ button on Next Tasks** — add a task without switching tabs
 - Fixed: editing a snoozed task no longer leaves a stale snooze in effect
 - Fixed: notification sound now routes through alarm volume (bypasses Do Not Disturb)
-- Fixed: full-screen alarm now works correctly on Android 14 OEM devices (OnePlus, Samsung)
 
 ---
 
-## v1.0
+## v1.0.1 — v1.0.11
 
 **Initial release**
 
@@ -32,4 +42,4 @@
 - Loops tab, All Tasks tab (filter/sort), Next Tasks tab
 - Alarms survive device reboots
 
-> How it was built: code written by [Claude Code](https://claude.ai/code); product decisions by a human. No code written by hand. Everything is local — no account, no tracking.
+> Code written by [Claude Code](https://claude.ai/code); product decisions by a human. No code written by hand. Everything is local — no account, no tracking.
