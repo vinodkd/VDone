@@ -315,6 +315,12 @@ private fun TaskCard(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                     )
+                } else if (node.scheduleLabel != null) {
+                    Text(
+                        node.scheduleLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
                 if (isSnoozed) {
                     Text(

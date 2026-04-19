@@ -109,7 +109,7 @@ fun VDoneNavHost(
             }
 
             composable("tasks") {
-                val vm: TaskListViewModel = viewModel(factory = TaskListViewModel.Factory(repository))
+                val vm: TaskListViewModel = viewModel(factory = TaskListViewModel.Factory(repository, conditionRepository))
                 TaskListScreen(
                     viewModel = vm,
                     onAddTask = { rootNav.navigate("detail/$NEW") },

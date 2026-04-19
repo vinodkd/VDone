@@ -3,8 +3,11 @@ package com.vdone.ui.tasks
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vdone.data.db.ConditionEntity
 import com.vdone.data.db.TaskEntity
+import com.vdone.data.repository.ConditionRepository
 import com.vdone.data.repository.TaskRepository
+import com.vdone.ui.util.scheduleLabel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -20,9 +23,13 @@ data class TaskNode(
     val childCount: Int,
     val doneChildCount: Int,
     val isExpanded: Boolean,
+    val scheduleLabel: String?,
 )
 
-class TaskListViewModel(private val repository: TaskRepository) : ViewModel() {
+class TaskListViewModel(
+    private val repository: TaskRepository,
+    private val conditionRepository: ConditionRepository,
+) : ViewModel() {
 
     private val expandedIds = mutableSetOf<String>()
     private val _refreshTick = MutableStateFlow(0)
@@ -31,22 +38,30 @@ class TaskListViewModel(private val repository: TaskRepository) : ViewModel() {
     val sortMode    = MutableStateFlow(SortMode.CREATED)
     val searchQuery = MutableStateFlow("")
 
-    val taskNodesWithRefresh = combine(
+    private val tasksAndConditions = combine(
         repository.getAllTasks(),
+        conditionRepository.getAllConditions(),
+    ) { tasks, conditions -> Pair(tasks, conditions) }
+
+    val taskNodesWithRefresh = combine(
+        tasksAndConditions,
         _refreshTick,
         filterMode,
         sortMode,
         searchQuery,
-    ) { all, _, filter, sort, query -> buildTree(all, filter, sort, query) }
+    ) { (all, conditions), _, filter, sort, query -> buildTree(all, conditions, filter, sort, query) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private fun buildTree(
         all: List<TaskEntity>,
+        conditions: List<ConditionEntity>,
         filter: FilterMode,
         sort: SortMode,
         query: String,
     ): List<TaskNode> {
         val byParent = all.groupBy { it.parentId }
+        val taskMap = all.associateBy { it.id }
+        val conditionsByTask = conditions.groupBy { it.taskId }
         val q = query.trim().lowercase()
 
         // Apply filter and search to root tasks; children always follow their parent.
@@ -82,7 +97,8 @@ class TaskListViewModel(private val repository: TaskRepository) : ViewModel() {
             val children = byParent[task.id] ?: emptyList()
             val doneChildren = children.count { it.status == "done" }
             val expanded = task.id in expandedIds
-            result.add(TaskNode(task, depth, children.size, doneChildren, expanded))
+            val label = scheduleLabel(task, conditionsByTask[task.id].orEmpty(), taskMap)
+            result.add(TaskNode(task, depth, children.size, doneChildren, expanded, label))
             if (expanded) children.sortedBy { it.createdAt }.forEach { visit(it, depth + 1) }
         }
 
@@ -105,9 +121,12 @@ class TaskListViewModel(private val repository: TaskRepository) : ViewModel() {
         viewModelScope.launch { repository.deleteTask(task) }
     }
 
-    class Factory(private val repository: TaskRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repository: TaskRepository,
+        private val conditionRepository: ConditionRepository,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>) =
-            TaskListViewModel(repository) as T
+            TaskListViewModel(repository, conditionRepository) as T
     }
 }

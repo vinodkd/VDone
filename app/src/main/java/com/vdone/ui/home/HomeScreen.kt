@@ -46,6 +46,7 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
 ) {
     val dueTasks by viewModel.dueTasks.collectAsState()
+    val scheduleLabels by viewModel.scheduleLabels.collectAsState()
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -102,6 +103,7 @@ fun HomeScreen(
                 items(dueTasks, key = { it.id }) { task ->
                     DueTaskCard(
                         task = task,
+                        scheduleLabel = scheduleLabels[task.id],
                         onDone = { viewModel.complete(task) },
                         onEdit = { onEditTask(task.id) },
                     )
@@ -113,7 +115,12 @@ fun HomeScreen(
 }
 
 @Composable
-private fun DueTaskCard(task: TaskEntity, onDone: () -> Unit, onEdit: () -> Unit) {
+private fun DueTaskCard(
+    task: TaskEntity,
+    scheduleLabel: String?,
+    onDone: () -> Unit,
+    onEdit: () -> Unit,
+) {
     val now = System.currentTimeMillis()
     val isOverdue = task.fixedStart != null && task.fixedStart < now
 
@@ -157,9 +164,9 @@ private fun DueTaskCard(task: TaskEntity, onDone: () -> Unit, onEdit: () -> Unit
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(top = 4.dp),
                     )
-                } else {
+                } else if (scheduleLabel != null) {
                     Text(
-                        text = task.frequency?.replaceFirstChar { it.uppercase() } ?: "",
+                        text = scheduleLabel,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(top = 4.dp),

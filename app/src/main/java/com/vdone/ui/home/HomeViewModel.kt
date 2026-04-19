@@ -9,6 +9,7 @@ import com.vdone.data.repository.ConditionRepository
 import com.vdone.data.repository.TaskRepository
 import com.vdone.scheduler.ConditionEvaluator
 import com.vdone.scheduler.FrequencyChecker
+import com.vdone.ui.util.scheduleLabel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -92,6 +93,14 @@ class HomeViewModel(
             .distinctBy { it.id }
             .sortedWith(compareBy(nullsLast()) { it.fixedStart })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val scheduleLabels = combine(taskData, conditionData) { td, cd ->
+        val taskMap = td.allTasks.associateBy { it.id }
+        val conditionsByTask = cd.allConditions.groupBy { it.taskId }
+        td.allTasks.associate { task ->
+            task.id to scheduleLabel(task, conditionsByTask[task.id].orEmpty(), taskMap)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     fun refresh() { refreshTick.value++ }
 
