@@ -30,9 +30,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 56px;
+      height: 48px;
     }
-    nav .logo { color: #fff; font-size: 1.3rem; font-weight: 700; letter-spacing: -0.5px; }
+    nav .logo { color: #fff; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.5px; }
     nav a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 0.9rem; }
     nav a:hover { color: #fff; }
 
@@ -41,27 +41,18 @@
       background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
       color: #fff;
       text-align: center;
-      padding: 80px 24px 64px;
+      padding: 28px 24px 24px;
     }
-    .hero .icon {
-      width: 96px; height: 96px;
-      background: rgba(255,255,255,0.15);
-      border-radius: 24px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.8rem;
-      margin-bottom: 24px;
-    }
-    .hero h1 { font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
-    .hero p  { font-size: 1.2rem; opacity: 0.9; max-width: 520px; margin: 0 auto 32px; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+    .hero p  { font-size: 1rem; opacity: 0.9; max-width: 520px; margin: 0 auto 20px; }
+    .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
     .btn {
       display: inline-block;
       background: #fff;
       color: var(--teal-dark);
       font-weight: 700;
-      font-size: 1rem;
-      padding: 14px 32px;
+      font-size: 0.95rem;
+      padding: 10px 24px;
       border-radius: 8px;
       text-decoration: none;
       transition: opacity 0.15s;
@@ -71,57 +62,103 @@
       background: transparent;
       color: #fff;
       border: 2px solid rgba(255,255,255,0.6);
-      margin-left: 12px;
     }
     .btn-outline:hover { border-color: #fff; opacity: 1; }
+    .btn-ghost {
+      background: transparent;
+      color: rgba(255,255,255,0.85);
+      border: none;
+      font-weight: 400;
+      font-size: 0.9rem;
+      padding: 10px 16px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .btn-ghost:hover { color: #fff; opacity: 1; }
+
+    /* ── ABOVE-FOLD FEATURES ── */
+    .above-fold {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 24px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .above-fold { grid-template-columns: 1fr; }
+    }
+    .persona-card {
+      border-radius: 12px;
+      padding: 20px 24px;
+      border: 1px solid var(--border);
+    }
+    .persona-card.procrastinator {
+      background: #fff8f0;
+      border-color: #f5c68a;
+    }
+    .persona-card.forgetful {
+      background: var(--teal-light);
+      border-color: #a0d4ce;
+    }
+    .persona-card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .persona-card.procrastinator h3 { color: #7a3e00; }
+    .persona-card.forgetful h3 { color: var(--teal-dark); }
+    .persona-card ul {
+      list-style: none;
+      font-size: 0.88rem;
+    }
+    .persona-card ul li {
+      padding: 4px 0;
+      padding-left: 1.4em;
+      position: relative;
+      color: var(--text);
+    }
+    .persona-card ul li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      font-weight: 700;
+    }
+    .persona-card.procrastinator ul li::before { color: #e07820; }
+    .persona-card.forgetful ul li::before { color: var(--teal); }
+    .persona-card ul li span {
+      font-weight: 600;
+    }
+    .persona-card ul li em {
+      font-style: normal;
+      color: var(--muted);
+    }
 
     /* ── VIBE CODED BANNER ── */
     .vibe-banner {
       background: #fffbea;
+      border-top: 1px solid #f0e08a;
       border-bottom: 1px solid #f0e08a;
       text-align: center;
-      padding: 12px 24px;
-      font-size: 0.9rem;
+      padding: 8px 24px;
+      font-size: 0.85rem;
       color: #7a6500;
+      margin-top: 24px;
     }
-    .vibe-banner strong { color: #5a4a00; }
+    .vibe-banner a { color: #7a6500; }
 
     /* ── SECTIONS ── */
-    section { max-width: 860px; margin: 0 auto; padding: 64px 24px; }
+    section { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
     section + section { padding-top: 0; }
     h2 {
-      font-size: 1.6rem;
+      font-size: 1.4rem;
       font-weight: 700;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       color: var(--teal-dark);
     }
-
-    /* ── FEATURE GRID ── */
-    .feature-group { margin-bottom: 40px; }
-    .feature-group-label {
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--teal-dark);
-      margin-bottom: 14px;
-      padding-bottom: 6px;
-      border-bottom: 2px solid var(--teal-light);
-    }
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
-    }
-    .feature-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-    }
-    .feature-card .emoji { font-size: 1.8rem; margin-bottom: 10px; }
-    .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
-    .feature-card p  { font-size: 0.9rem; color: var(--muted); }
 
     /* ── INSTALL STEPS ── */
     .steps { list-style: none; counter-reset: step; }
@@ -129,23 +166,23 @@
       counter-increment: step;
       display: flex;
       gap: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       align-items: flex-start;
     }
     .steps li::before {
       content: counter(step);
       flex-shrink: 0;
-      width: 32px; height: 32px;
+      width: 28px; height: 28px;
       background: var(--teal);
       color: #fff;
       border-radius: 50%;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .steps li div { padding-top: 4px; }
+    .steps li div { padding-top: 2px; }
     .steps li strong { display: block; margin-bottom: 2px; }
     .steps li p { font-size: 0.9rem; color: var(--muted); }
     code {
@@ -159,8 +196,7 @@
     .vibe-section {
       background: var(--teal-light);
       border-radius: 12px;
-      padding: 32px;
-      margin-top: 8px;
+      padding: 28px;
     }
     .vibe-section p { color: #00473e; font-size: 0.95rem; margin-bottom: 10px; }
     .vibe-section p:last-child { margin-bottom: 0; }
@@ -169,7 +205,7 @@
     footer {
       border-top: 1px solid var(--border);
       text-align: center;
-      padding: 32px 24px;
+      padding: 24px;
       font-size: 0.85rem;
       color: var(--muted);
     }
@@ -184,15 +220,37 @@
 </nav>
 
 <div class="hero">
-  <div class="icon">V&#x2714;</div>
   <h1>VDone</h1>
-  <p>We Done? A todo app built for procrastinators and forgetful people. Flexible scheduling, intrusive reminders, and open-loop tracking — without forcing rigid deadlines.</p>
-  <a class="btn" href="https://github.com/vinodkd/VDone/releases/latest/download/vdone.apk">
-    Download APK (Android)
-  </a>
-  <a class="btn btn-outline" href="https://github.com/vinodkd/VDone">
-    View on GitHub
-  </a>
+  <p>A todo app for procrastinators and forgetful people. Flexible scheduling, intrusive reminders — no rigid deadlines.</p>
+  <div class="hero-actions">
+    <a class="btn" href="https://github.com/vinodkd/VDone/releases/latest/download/vdone.apk">
+      &#x2B07; Download APK (Android)
+    </a>
+    <a class="btn btn-ghost" href="#install">How to install &darr;</a>
+    <a class="btn btn-outline" href="https://github.com/vinodkd/VDone">GitHub</a>
+  </div>
+</div>
+
+<div class="above-fold">
+  <div class="persona-card procrastinator">
+    <h3>&#x1F62C; For procrastinators</h3>
+    <ul>
+      <li><span>Snooze</span> <em>— 5, 10, or 15 min; alarm comes back</em></li>
+      <li><span>Defer to a task</span> <em>— pick what you're doing instead; reminder resurfaces when that task is done</em></li>
+      <li><span>Skip this time</span> <em>— suppress this instance of a recurring task; next one schedules automatically</em></li>
+      <li><span>"I'll do it after X"</span> <em>— chain tasks; reminder fires only after the preceding task is done, with an optional delay</em></li>
+    </ul>
+  </div>
+  <div class="persona-card forgetful">
+    <h3>&#x1F914; For forgetful people</h3>
+    <ul>
+      <li><span>Full-screen alarm</span> <em>— wakes the screen, shows over the lock screen; can't be ignored</em></li>
+      <li><span>Recurring tasks</span> <em>— daily/weekly/monthly/yearly, specific days; resets after each completion</em></li>
+      <li><span>Home screen widget</span> <em>— today's tasks without opening the app</em></li>
+      <li><span>Open loops</span> <em>— waiting on someone else? set a follow-up date; tracked in the Loops tab</em></li>
+      <li><span>Schedule labels on rows</span> <em>— see when each task fires at a glance without opening it</em></li>
+    </ul>
+  </div>
 </div>
 
 <div class="vibe-banner">
@@ -201,150 +259,57 @@
 
 <section>
   <h2>Screenshots</h2>
-  <div style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-bottom:8px;">
+  <div style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center;">
     <figure style="margin:0; text-align:center;">
-      <img src="screenshots/next_tasks.png" alt="Next Tasks" style="height:480px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+      <img src="screenshots/next_tasks.png" alt="Next Tasks" style="height:440px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
       <figcaption style="margin-top:8px; font-size:0.85rem; color:var(--muted);">Next Tasks</figcaption>
     </figure>
     <figure style="margin:0; text-align:center;">
-      <img src="screenshots/subtasks.png" alt="Subtasks" style="height:480px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+      <img src="screenshots/subtasks.png" alt="Subtasks" style="height:440px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
       <figcaption style="margin-top:8px; font-size:0.85rem; color:var(--muted);">Nested Tasks</figcaption>
     </figure>
     <figure style="margin:0; text-align:center;">
-      <img src="screenshots/loops.png" alt="Open Loops" style="height:480px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+      <img src="screenshots/loops.png" alt="Open Loops" style="height:440px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
       <figcaption style="margin-top:8px; font-size:0.85rem; color:var(--muted);">Open Loops</figcaption>
     </figure>
     <figure style="margin:0; text-align:center;">
-      <img src="screenshots/alarm.png" alt="Full-screen alarm" style="height:480px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+      <img src="screenshots/alarm.png" alt="Full-screen alarm" style="height:440px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
       <figcaption style="margin-top:8px; font-size:0.85rem; color:var(--muted);">Full-screen Alarm</figcaption>
     </figure>
   </div>
 </section>
 
-<section>
-  <h2>Features</h2>
-
-  <div class="feature-group">
-    <div class="feature-group-label">For procrastinators — it'll let you off the hook, then hold you to it</div>
-    <div class="features">
-      <div class="feature-card">
-        <div class="emoji">&#x1F4A4;</div>
-        <h3>Snooze</h3>
-        <p>"Just 5 more minutes." Fine. 5, 10, or 15 — pick one. The alarm comes back.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x1F500;</div>
-        <h3>Defer to a Task</h3>
-        <p>Doing something else right now? Pick it from the alarm screen. The reminder re-surfaces automatically when that task is marked done. Can't escape it.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x23ED;</div>
-        <h3>Skip This Time</h3>
-        <p>For recurring tasks: skip the current instance without marking it done. The next occurrence is scheduled automatically. No guilt, no broken streak — the task just comes back.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x1F517;</div>
-        <h3>Condition-Based Scheduling</h3>
-        <p>"I'll do it after X" is now a valid schedule. Chain tasks together — a reminder surfaces only when the preceding task is actually done, with an optional delay (e.g. 1 hour after).</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="feature-group">
-    <div class="feature-group-label">For forgetful people — reminders that actually reach you</div>
-    <div class="features">
-      <div class="feature-card">
-        <div class="emoji">&#x23F0;</div>
-        <h3>Intrusive Alarms</h3>
-        <p>Full-screen alarm when your phone is locked — wakes the screen, shows over the lock screen. Heads-up notification when the phone is on. You won't miss it.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x1F501;</div>
-        <h3>Recurring Tasks</h3>
-        <p>Daily, weekly, monthly, yearly — with an optional time of day and days-of-week filter. Set it once; get reminded forever. Resets automatically after each completion.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x1F4F1;</div>
-        <h3>Home Screen Widget</h3>
-        <p>Today's tasks on your home screen without opening the app. Tap a task to open it. Tap + to add a new one.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x1F4AC;</div>
-        <h3>Open Loops</h3>
-        <p>Waiting on someone else? Mark the task as an open loop with a follow-up date. The Loops tab keeps everything pending visible so nothing disappears into the void.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="feature-group">
-    <div class="feature-group-label">Core task management</div>
-    <div class="features">
-      <div class="feature-card">
-        <div class="emoji">&#x1F4CB;</div>
-        <h3>Nested Tasks</h3>
-        <p>Break any task into subtasks to arbitrary depth. Parent tasks show progress across their children.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x1F4C5;</div>
-        <h3>Schedule at a Glance</h3>
-        <p>Every task row shows its schedule — "Today at 2:30 PM", "Weekdays at 08:00", "After: morning run +1h". No need to open the task to know when it fires.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x1F4C6;</div>
-        <h3>Flexible Scheduling</h3>
-        <p>Fixed date/time, recurring with specific days of the week, or condition-based (after task done, before task starts). Pick the right mode per task.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x1F50D;</div>
-        <h3>Search</h3>
-        <p>Filter any task by title or notes from the All Tasks tab. Instant results as you type.</p>
-      </div>
-      <div class="feature-card">
-        <div class="emoji">&#x1F3A4;</div>
-        <h3>Show Mode</h3>
-        <p>At a gig or event? Enable Show Mode to silence all alarms globally. Switch it off when you're back.</p>
-      </div>
-    </div>
-  </div>
-
-</section>
-
-<section>
+<section id="install">
   <h2>Installing the APK</h2>
-  <p style="margin-bottom:24px; color:var(--muted); font-size:0.95rem;">
-    VDone is not yet on the Google Play Store. Install it directly using the APK file.
-    This requires enabling installs from unknown sources on your device.
+  <p style="margin-bottom:20px; color:var(--muted); font-size:0.9rem;">
+    VDone is not yet on the Google Play Store. Install it directly — requires enabling installs from unknown sources.
   </p>
   <ol class="steps">
     <li>
       <div>
         <strong>Download the APK</strong>
-        <p>Tap the "Download APK" button above, or go to the
-          <a href="https://github.com/vinodkd/VDone/releases/latest">Releases page</a>
-          and download <code>vdone.apk</code>.</p>
+        <p>Tap "Download APK" above, or get <code>vdone.apk</code> from the
+          <a href="https://github.com/vinodkd/VDone/releases/latest">Releases page</a>.</p>
       </div>
     </li>
     <li>
       <div>
         <strong>Allow installs from unknown sources</strong>
-        <p>On Android 8+: when prompted after opening the APK, tap <em>Settings</em> and enable
-          <em>"Allow from this source"</em> for your browser or file manager.
-          On older Android: go to <strong>Settings → Security → Unknown sources</strong> and enable it.</p>
+        <p>Android 8+: when prompted after opening the APK, tap <em>Settings</em> → enable <em>"Allow from this source"</em>.
+          Older Android: <strong>Settings → Security → Unknown sources</strong>.</p>
       </div>
     </li>
     <li>
       <div>
         <strong>Open the APK and install</strong>
-        <p>Open the downloaded file from your notifications or the Downloads folder.
-          Tap <em>Install</em> and wait for it to complete.</p>
+        <p>Open the downloaded file from your notifications or Downloads folder. Tap <em>Install</em>.</p>
       </div>
     </li>
     <li>
       <div>
         <strong>Grant permissions on first launch</strong>
-        <p>VDone will ask for <em>Notifications</em>, <em>Exact alarms</em>, and
-          <em>Display over other apps (full-screen intents)</em>.
-          All three are needed for reminders to work reliably.</p>
+        <p>VDone needs <em>Notifications</em>, <em>Exact alarms</em>, and <em>Display over other apps</em>
+          for reminders to work reliably.</p>
       </div>
     </li>
   </ol>
