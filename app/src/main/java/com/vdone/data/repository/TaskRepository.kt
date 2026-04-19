@@ -132,6 +132,15 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         if (task.frequencyTime != null) AlarmScheduler.scheduleFrequency(context, task)
     }
 
+    suspend fun skipFrequencyTask(task: TaskEntity) {
+        // Advance lastCompletedAt without marking done — suppresses reminder for the current period
+        // and reschedules the next occurrence.
+        val now = System.currentTimeMillis()
+        dao.update(task.copy(lastCompletedAt = now, updatedAt = now))
+        if (task.frequencyTime != null) AlarmScheduler.scheduleFrequency(context, task)
+        DueTasksWidget.refresh(context)
+    }
+
     suspend fun deleteTask(task: TaskEntity) {
         AlarmScheduler.cancel(context, task.id)
         dao.deleteChildrenOf(task.id)

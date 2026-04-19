@@ -82,8 +82,10 @@ class ReminderActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.errorContainer,
                 ) {
                     var nextTasks by remember { mutableStateOf<List<TaskEntity>>(emptyList()) }
+                    var alarmingTask by remember { mutableStateOf<TaskEntity?>(null) }
 
                     LaunchedEffect(Unit) {
+                        alarmingTask = repository.getTaskById(taskId)
                         nextTasks = repository.getAllTasks().first()
                             .filter { it.status == "todo" && it.id != taskId }
                     }
@@ -132,6 +134,22 @@ class ReminderActivity : ComponentActivity() {
                             }
                         }
                         Spacer(Modifier.height(8.dp))
+                        if (alarmingTask?.scheduleMode == "frequency") {
+                            OutlinedButton(
+                                onClick = {
+                                    lifecycleScope.launch {
+                                        val task = repository.getTaskById(taskId)
+                                        if (task != null) repository.skipFrequencyTask(task)
+                                        ReminderService.dismiss(this@ReminderActivity)
+                                        finish()
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text("Skip this time", color = MaterialTheme.colorScheme.onErrorContainer)
+                            }
+                            Spacer(Modifier.height(4.dp))
+                        }
                         Button(
                             onClick = {
                                 lifecycleScope.launch {
@@ -141,6 +159,7 @@ class ReminderActivity : ComponentActivity() {
                                     finish()
                                 }
                             },
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text("Done")
                         }
