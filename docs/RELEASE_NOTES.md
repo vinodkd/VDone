@@ -2,6 +2,18 @@
 
 ---
 
+## v1.0.19 — v1.0.23
+
+**Scheduling improvements and alarm screen upgrades**
+
+- **Skip this time** — recurring tasks now have a "Skip this time" button on the alarm screen; advances the schedule without marking the task done
+- **Fixed alarm scheduling** — monthly, weekly, and yearly alarms now schedule correctly to their next occurrence
+- **Conditional offset** — after-task-done conditions can now specify a delay (e.g. wait 1h 30m after the preceding task completes)
+- **Schedule info on task rows** — Next Tasks and All Tasks rows now show a compact schedule label (e.g. "Today at 2:30 PM", "Weekdays at 08:00", "After: meeting")
+- **Time picker fix** — editing a fixed-time task now correctly pre-fills the time picker with the saved time
+
+---
+
 ## v1.0.18
 
 **Alarm improvements and defer-to-task**
