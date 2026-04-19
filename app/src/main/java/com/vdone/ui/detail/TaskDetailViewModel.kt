@@ -19,6 +19,7 @@ data class PendingCondition(
     val id: String = UUID.randomUUID().toString(),
     val type: String,
     val refTaskId: String?,
+    val offsetSeconds: Long = 0,
 )
 
 data class TaskDetailUiState(
@@ -130,15 +131,14 @@ class TaskDetailViewModel(
         )
     }
 
-    fun addCondition(type: String, refTaskId: String?) {
+    fun addCondition(type: String, refTaskId: String?, offsetSeconds: Long = 0) {
         if (taskId != null) {
-            // Existing task: persist immediately
             viewModelScope.launch {
-                conditionRepository.addCondition(taskId, type, refTaskId)
+                conditionRepository.addCondition(taskId, type, refTaskId, offsetSeconds)
             }
         } else {
-            // New task: queue in memory until save()
-            val pending = _uiState.value.pendingConditions + PendingCondition(type = type, refTaskId = refTaskId)
+            val pending = _uiState.value.pendingConditions +
+                PendingCondition(type = type, refTaskId = refTaskId, offsetSeconds = offsetSeconds)
             _uiState.value = _uiState.value.copy(pendingConditions = pending)
         }
     }
@@ -148,9 +148,10 @@ class TaskDetailViewModel(
         _uiState.value = _uiState.value.copy(pendingConditions = updated)
     }
 
-    fun editPendingCondition(id: String, newType: String, newRefTaskId: String?) {
+    fun editPendingCondition(id: String, newType: String, newRefTaskId: String?, offsetSeconds: Long = 0) {
         val updated = _uiState.value.pendingConditions.map { pending ->
-            if (pending.id == id) pending.copy(type = newType, refTaskId = newRefTaskId) else pending
+            if (pending.id == id) pending.copy(type = newType, refTaskId = newRefTaskId, offsetSeconds = offsetSeconds)
+            else pending
         }
         _uiState.value = _uiState.value.copy(pendingConditions = updated)
     }
@@ -159,11 +160,11 @@ class TaskDetailViewModel(
         viewModelScope.launch { conditionRepository.deleteCondition(conditionId) }
     }
 
-    fun editSavedCondition(conditionId: String, newType: String, newRefTaskId: String?) {
+    fun editSavedCondition(conditionId: String, newType: String, newRefTaskId: String?, offsetSeconds: Long = 0) {
         val targetTaskId = taskId ?: return
         viewModelScope.launch {
             conditionRepository.deleteCondition(conditionId)
-            conditionRepository.addCondition(targetTaskId, newType, newRefTaskId)
+            conditionRepository.addCondition(targetTaskId, newType, newRefTaskId, offsetSeconds)
         }
     }
 
@@ -204,7 +205,7 @@ class TaskDetailViewModel(
                     followUpAt = state.followUpAt,
                 )
                 state.pendingConditions.forEach { pending ->
-                    conditionRepository.addCondition(newId, pending.type, pending.refTaskId)
+                    conditionRepository.addCondition(newId, pending.type, pending.refTaskId, pending.offsetSeconds)
                 }
             } else {
                 val existing = repository.getTaskById(taskId!!) ?: return@launch

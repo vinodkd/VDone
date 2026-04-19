@@ -64,8 +64,14 @@ private fun formatFrequency(task: TaskEntity): String {
 
 private fun formatCondition(condition: ConditionEntity, taskMap: Map<String, TaskEntity>): String {
     val refTitle = taskMap[condition.refTaskId]?.title ?: "?"
+    val offset = condition.offsetSeconds.let { s ->
+        if (s <= 0) "" else {
+            val h = s / 3600; val m = (s % 3600) / 60
+            when { h > 0 && m > 0 -> " +${h}h ${m}m"; h > 0 -> " +${h}h"; else -> " +${m}m" }
+        }
+    }
     return when (condition.type) {
-        "after_task_done"  -> "After: $refTitle"
+        "after_task_done"  -> "After: $refTitle$offset"
         "before_task_time" -> "Before: $refTitle"
         else               -> condition.type
     }

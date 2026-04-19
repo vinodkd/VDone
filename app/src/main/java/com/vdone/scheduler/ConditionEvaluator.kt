@@ -27,7 +27,13 @@ object ConditionEvaluator {
             when (condition.type) {
                 "after_task_done" -> {
                     val ref = taskMap[condition.refTaskId] ?: return@all false
-                    ref.status == "done" || isToday(ref.lastCompletedAt, now)
+                    val completedAt: Long? = when {
+                        ref.status == "done"           -> ref.updatedAt
+                        isToday(ref.lastCompletedAt, now) -> ref.lastCompletedAt
+                        else                           -> null
+                    }
+                    completedAt != null &&
+                        (condition.offsetSeconds <= 0 || now >= completedAt + condition.offsetSeconds * 1000L)
                 }
                 "before_task_time" -> {
                     val fixedStart = taskMap[condition.refTaskId]?.fixedStart

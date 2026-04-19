@@ -23,7 +23,9 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -171,11 +173,11 @@ fun TaskDetailScreen(
                     onSetFrequencyDays = { viewModel.setFrequencyDays(it) },
                     onSetFrequencyTime = { viewModel.setFrequencyTime(it) },
                     onSetFixedStart = { viewModel.setFixedStart(it) },
-                    onAddCondition = { type, refTaskId -> viewModel.addCondition(type, refTaskId) },
+                    onAddCondition = { type, refTaskId, offset -> viewModel.addCondition(type, refTaskId, offset) },
                     onDeleteSavedCondition = { viewModel.deleteSavedCondition(it) },
                     onDeletePendingCondition = { viewModel.deletePendingCondition(it) },
-                    onEditSavedCondition = { id, type, refTaskId -> viewModel.editSavedCondition(id, type, refTaskId) },
-                    onEditPendingCondition = { id, type, refTaskId -> viewModel.editPendingCondition(id, type, refTaskId) },
+                    onEditSavedCondition = { id, type, refTaskId, offset -> viewModel.editSavedCondition(id, type, refTaskId, offset) },
+                    onEditPendingCondition = { id, type, refTaskId, offset -> viewModel.editPendingCondition(id, type, refTaskId, offset) },
                 )
             }
 
@@ -237,11 +239,11 @@ private fun ScheduleSection(
     onSetFrequencyDays: (Int?) -> Unit,
     onSetFrequencyTime: (Int?) -> Unit,
     onSetFixedStart: (Long?) -> Unit,
-    onAddCondition: (type: String, refTaskId: String?) -> Unit,
+    onAddCondition: (type: String, refTaskId: String?, offsetSeconds: Long) -> Unit,
     onDeleteSavedCondition: (String) -> Unit,
     onDeletePendingCondition: (String) -> Unit,
-    onEditSavedCondition: (id: String, type: String, refTaskId: String?) -> Unit,
-    onEditPendingCondition: (id: String, type: String, refTaskId: String?) -> Unit,
+    onEditSavedCondition: (id: String, type: String, refTaskId: String?, offsetSeconds: Long) -> Unit,
+    onEditPendingCondition: (id: String, type: String, refTaskId: String?, offsetSeconds: Long) -> Unit,
 ) {
     val modeIndex = when (scheduleMode) {
         "frequency" -> 1
@@ -469,11 +471,11 @@ private fun ConditionSection(
     savedConditions: List<ConditionEntity>,
     pendingConditions: List<PendingCondition>,
     allTasks: List<TaskEntity>,
-    onAdd: (type: String, refTaskId: String?) -> Unit,
+    onAdd: (type: String, refTaskId: String?, offsetSeconds: Long) -> Unit,
     onDeleteSaved: (String) -> Unit,
     onDeletePending: (String) -> Unit,
-    onEditSaved: (id: String, type: String, refTaskId: String?) -> Unit,
-    onEditPending: (id: String, type: String, refTaskId: String?) -> Unit,
+    onEditSaved: (id: String, type: String, refTaskId: String?, offsetSeconds: Long) -> Unit,
+    onEditPending: (id: String, type: String, refTaskId: String?, offsetSeconds: Long) -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     // editTarget: Pair(id, isForSavedCondition) when editing an existing condition
@@ -542,8 +544,8 @@ private fun ConditionSection(
         AddConditionDialog(
             allTasks = allTasks,
             onDismiss = { showAddDialog = false },
-            onConfirm = { type, refTaskId ->
-                onAdd(type, refTaskId)
+            onConfirm = { type, refTaskId, offset ->
+                onAdd(type, refTaskId, offset)
                 showAddDialog = false
             },
         )
@@ -551,24 +553,40 @@ private fun ConditionSection(
 
     editTarget?.let { (id, currentType, currentRefTaskId) ->
         val isSaved = savedConditions.any { it.id == id }
+        val currentOffset = if (isSaved)
+            savedConditions.find { it.id == id }?.offsetSeconds ?: 0L
+        else
+            (pendingConditions.find { it.id == id }?.offsetSeconds) ?: 0L
         AddConditionDialog(
             allTasks = allTasks,
             initialType = currentType,
             initialRefTaskId = currentRefTaskId,
+            initialOffsetSeconds = currentOffset,
             onDismiss = { editTarget = null },
-            onConfirm = { type, refTaskId ->
-                if (isSaved) onEditSaved(id, type, refTaskId)
-                else onEditPending(id, type, refTaskId)
+            onConfirm = { type, refTaskId, offset ->
+                if (isSaved) onEditSaved(id, type, refTaskId, offset)
+                else onEditPending(id, type, refTaskId, offset)
                 editTarget = null
             },
         )
     }
 }
 
+private fun offsetLabel(seconds: Long): String {
+    if (seconds <= 0) return ""
+    val h = seconds / 3600
+    val m = (seconds % 3600) / 60
+    return when {
+        h > 0 && m > 0 -> " +${h}h ${m}m"
+        h > 0          -> " +${h}h"
+        else           -> " +${m}m"
+    }
+}
+
 private fun ConditionEntity.label(tasks: List<TaskEntity>): String {
     val refTitle = tasks.find { it.id == refTaskId }?.title ?: "?"
     return when (type) {
-        "after_task_done" -> "After done: $refTitle"
+        "after_task_done"  -> "After done: $refTitle${offsetLabel(offsetSeconds)}"
         "before_task_time" -> "Before: $refTitle"
         else -> type
     }
@@ -577,7 +595,7 @@ private fun ConditionEntity.label(tasks: List<TaskEntity>): String {
 private fun PendingCondition.label(tasks: List<TaskEntity>): String {
     val refTitle = tasks.find { it.id == refTaskId }?.title ?: "?"
     return when (type) {
-        "after_task_done" -> "After done: $refTitle"
+        "after_task_done"  -> "After done: $refTitle${offsetLabel(offsetSeconds)}"
         "before_task_time" -> "Before: $refTitle"
         else -> type
     }
@@ -589,8 +607,9 @@ private fun AddConditionDialog(
     allTasks: List<TaskEntity>,
     initialType: String? = null,
     initialRefTaskId: String? = null,
+    initialOffsetSeconds: Long = 0,
     onDismiss: () -> Unit,
-    onConfirm: (type: String, refTaskId: String?) -> Unit,
+    onConfirm: (type: String, refTaskId: String?, offsetSeconds: Long) -> Unit,
 ) {
     val conditionTypes = listOf("After task done" to "after_task_done", "Before task time" to "before_task_time")
     var selectedType by remember {
@@ -601,6 +620,8 @@ private fun AddConditionDialog(
     }
     var typeExpanded by remember { mutableStateOf(false) }
     var taskExpanded by remember { mutableStateOf(false) }
+    var offsetHours   by remember { mutableStateOf(if (initialOffsetSeconds > 0) (initialOffsetSeconds / 3600).toString() else "") }
+    var offsetMinutes by remember { mutableStateOf(if (initialOffsetSeconds > 0) ((initialOffsetSeconds % 3600) / 60).toString() else "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -658,11 +679,44 @@ private fun AddConditionDialog(
                         }
                     }
                 }
+
+                if (selectedType.second == "after_task_done") {
+                    Text(
+                        "Wait after completion (optional)",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = offsetHours,
+                            onValueChange = { if (it.length <= 2 && it.all(Char::isDigit)) offsetHours = it },
+                            label = { Text("Hours") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                        )
+                        OutlinedTextField(
+                            value = offsetMinutes,
+                            onValueChange = { v ->
+                                if (v.length <= 2 && v.all(Char::isDigit) && (v.toIntOrNull() ?: 0) < 60)
+                                    offsetMinutes = v
+                            },
+                            label = { Text("Minutes") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
             TextButton(
-                onClick = { selectedTask?.let { onConfirm(selectedType.second, it.id) } },
+                onClick = {
+                    val totalSeconds = (offsetHours.toLongOrNull() ?: 0L) * 3600L +
+                                      (offsetMinutes.toLongOrNull() ?: 0L) * 60L
+                    selectedTask?.let { onConfirm(selectedType.second, it.id, totalSeconds) }
+                },
                 enabled = selectedTask != null,
             ) { Text("Add") }
         },
