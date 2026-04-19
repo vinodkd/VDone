@@ -97,6 +97,17 @@
     }
 
     /* ── FEATURE GRID ── */
+    .feature-group { margin-bottom: 40px; }
+    .feature-group-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--teal-dark);
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--teal-light);
+    }
     .features {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -212,53 +223,90 @@
 
 <section>
   <h2>Features</h2>
-  <div class="features">
-    <div class="feature-card">
-      <div class="emoji">&#x23F0;</div>
-      <h3>Intrusive Reminders</h3>
-      <p>Full-screen alarm when your phone is locked. Heads-up notification when it's on. You won't miss it.</p>
-    </div>
-    <div class="feature-card">
-      <div class="emoji">&#x1F501;</div>
-      <h3>Recurring Tasks</h3>
-      <p>Daily, weekly, monthly, yearly — with an optional time of day. Frequency tasks reset automatically after completion.</p>
-    </div>
-    <div class="feature-card">
-      <div class="emoji">&#x1F517;</div>
-      <h3>Condition-Based Scheduling</h3>
-      <p>Start a task after another finishes, before one starts, or after a named event like "after breakfast".</p>
-    </div>
-    <div class="feature-card">
-      <div class="emoji">&#x1F4CB;</div>
-      <h3>Nested Tasks</h3>
-      <p>Break any task into subtasks to arbitrary depth. Parents show completion progress across their children.</p>
-    </div>
-    <div class="feature-card">
-      <div class="emoji">&#x1F4AC;</div>
-      <h3>Open Loops</h3>
-      <p>Waiting on someone? Mark the task as an open loop with a follow-up date. The Loops tab keeps them visible so nothing falls through the cracks.</p>
-    </div>
-    <div class="feature-card">
-      <div class="emoji">&#x1F4A4;</div>
-      <h3>Snooze &amp; Defer</h3>
-      <p>Not right now? Snooze for 5, 10, or 15 minutes. Or pick a task you're doing instead — the reminder comes back automatically when that task is done.</p>
-    </div>
-    <div class="feature-card">
-      <div class="emoji">&#x1F4C6;</div>
-      <h3>Days of Week</h3>
-      <p>Recurring tasks can be pinned to specific days — weekdays only, weekends only, or any custom combination.</p>
-    </div>
-    <div class="feature-card">
-      <div class="emoji">&#x1F4F1;</div>
-      <h3>Home Screen Widget</h3>
-      <p>See up to 5 tasks due today without opening the app. Tap a task to open it, or tap + to add a new one.</p>
-    </div>
-    <div class="feature-card">
-      <div class="emoji">&#x1F3A4;</div>
-      <h3>Show Mode</h3>
-      <p>At a gig or event? Enable Show Mode to silence all alarms globally. Switch it off when you're back and reminders resume.</p>
+
+  <div class="feature-group">
+    <div class="feature-group-label">For procrastinators — it'll let you off the hook, then hold you to it</div>
+    <div class="features">
+      <div class="feature-card">
+        <div class="emoji">&#x1F4A4;</div>
+        <h3>Snooze</h3>
+        <p>"Just 5 more minutes." Fine. 5, 10, or 15 — pick one. The alarm comes back.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x1F500;</div>
+        <h3>Defer to a Task</h3>
+        <p>Doing something else right now? Pick it from the alarm screen. The reminder re-surfaces automatically when that task is marked done. Can't escape it.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x23ED;</div>
+        <h3>Skip This Time</h3>
+        <p>For recurring tasks: skip the current instance without marking it done. The next occurrence is scheduled automatically. No guilt, no broken streak — the task just comes back.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x1F517;</div>
+        <h3>Condition-Based Scheduling</h3>
+        <p>"I'll do it after X" is now a valid schedule. Chain tasks together — a reminder surfaces only when the preceding task is actually done, with an optional delay (e.g. 1 hour after).</p>
+      </div>
     </div>
   </div>
+
+  <div class="feature-group">
+    <div class="feature-group-label">For forgetful people — reminders that actually reach you</div>
+    <div class="features">
+      <div class="feature-card">
+        <div class="emoji">&#x23F0;</div>
+        <h3>Intrusive Alarms</h3>
+        <p>Full-screen alarm when your phone is locked — wakes the screen, shows over the lock screen. Heads-up notification when the phone is on. You won't miss it.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x1F501;</div>
+        <h3>Recurring Tasks</h3>
+        <p>Daily, weekly, monthly, yearly — with an optional time of day and days-of-week filter. Set it once; get reminded forever. Resets automatically after each completion.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x1F4F1;</div>
+        <h3>Home Screen Widget</h3>
+        <p>Today's tasks on your home screen without opening the app. Tap a task to open it. Tap + to add a new one.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x1F4AC;</div>
+        <h3>Open Loops</h3>
+        <p>Waiting on someone else? Mark the task as an open loop with a follow-up date. The Loops tab keeps everything pending visible so nothing disappears into the void.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="feature-group">
+    <div class="feature-group-label">Core task management</div>
+    <div class="features">
+      <div class="feature-card">
+        <div class="emoji">&#x1F4CB;</div>
+        <h3>Nested Tasks</h3>
+        <p>Break any task into subtasks to arbitrary depth. Parent tasks show progress across their children.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x1F4C5;</div>
+        <h3>Schedule at a Glance</h3>
+        <p>Every task row shows its schedule — "Today at 2:30 PM", "Weekdays at 08:00", "After: morning run +1h". No need to open the task to know when it fires.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x1F4C6;</div>
+        <h3>Flexible Scheduling</h3>
+        <p>Fixed date/time, recurring with specific days of the week, or condition-based (after task done, before task starts). Pick the right mode per task.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x1F50D;</div>
+        <h3>Search</h3>
+        <p>Filter any task by title or notes from the All Tasks tab. Instant results as you type.</p>
+      </div>
+      <div class="feature-card">
+        <div class="emoji">&#x1F3A4;</div>
+        <h3>Show Mode</h3>
+        <p>At a gig or event? Enable Show Mode to silence all alarms globally. Switch it off when you're back.</p>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 <section>
@@ -315,7 +363,7 @@
       Think of it as pair programming where one half of the pair never gets tired.
     </p>
     <p>
-      Source is fully open. Twelve milestones from empty Android project to this release.
+      Source is fully open. From empty Android project to v1.0.23 — no code written by hand.
     </p>
   </div>
 </section>
