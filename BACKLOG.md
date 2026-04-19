@@ -56,8 +56,7 @@ Future milestones and ideas, roughly in priority order.
 - **Retroactive completion time**: when marking done, optionally back-date `lastCompletedAt`. Useful for conditional chains. Held — may be overkill.
 - **Recur + conditional tasks**: e.g. hiking on Sat/Sun, 1hr after wake-up. Held — needs design.
 - **Countdown reminders before a fixed event**: "remind me every day starting X days before event" so prep happens gradually. Not just 2 reminders — daily from day-N until the event. Design: a `countdownDays` field on fixed tasks; scheduler generates a daily alarm series starting N days out.
-- **Per-task alarm sound**: same sound gets ignored over time. Add a sound picker per task (shown in task detail when schedule mode is fixed or frequency). Store sound URI in `TaskEntity`. `ReminderService` uses the task's sound instead of system default.
-- **Monthly tasks alarm on 1st**: currently monthly tasks show all month with no alarm anchor. Change to: alarm fires on the 1st of each month (if `frequencyTime` set, at that time; otherwise just appears in Next Tasks on the 1st).
+- ~~**Per-task alarm sound**~~: shipped in v1.0.24 — sound picker in task detail for fixed/recurring tasks.
 - **Mute alarm with lock button**: pressing the power/lock button while the alarm is sounding should silence the audio (but keep the notification/screen visible until explicitly dismissed or snoozed).
 - ~~**Defer to task**~~: shipped in v1.0.18 — alarm screen shows current tasks to defer behind, plus "Other task at HH:MM" placeholder.
 - **Snooze UX revisit**: replace fixed-duration snooze buttons with a "remind me in X" input (user-specified duration or time). Currently 5/10/15 min hardcoded on the alarm screen.
