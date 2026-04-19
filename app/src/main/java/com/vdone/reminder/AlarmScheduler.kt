@@ -38,8 +38,45 @@ object AlarmScheduler {
 
     fun scheduleFrequency(context: Context, task: TaskEntity) {
         val minuteOfDay = task.frequencyTime ?: return
-        val days = task.frequencyDays ?: 0
         val now = System.currentTimeMillis()
+        val triggerAt = when (task.frequency) {
+            "monthly" -> nextMonthlyTrigger(minuteOfDay, now)
+            "weekly"  -> nextPeriodicTrigger(minuteOfDay, now, Calendar.WEEK_OF_YEAR, 1)
+            "yearly"  -> nextPeriodicTrigger(minuteOfDay, now, Calendar.YEAR, 1)
+            else      -> nextDailyTrigger(minuteOfDay, task.frequencyDays ?: 0, now)
+        }
+        scheduleAt(context, task.id, task.title, triggerAt)
+    }
+
+    private fun nextMonthlyTrigger(minuteOfDay: Int, now: Long): Long {
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, minuteOfDay / 60)
+            set(Calendar.MINUTE, minuteOfDay % 60)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        if (cal.timeInMillis <= now) {
+            cal.add(Calendar.MONTH, 1)
+            cal.set(Calendar.DAY_OF_MONTH, 1)
+        }
+        return cal.timeInMillis
+    }
+
+    private fun nextPeriodicTrigger(minuteOfDay: Int, now: Long, field: Int, amount: Int): Long {
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, minuteOfDay / 60)
+            set(Calendar.MINUTE, minuteOfDay % 60)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        if (cal.timeInMillis <= now) cal.add(field, amount)
+        return cal.timeInMillis
+    }
+
+    private fun nextDailyTrigger(minuteOfDay: Int, days: Int, now: Long): Long {
         val cal = Calendar.getInstance().apply {
             timeInMillis = now
             set(Calendar.HOUR_OF_DAY, minuteOfDay / 60)
@@ -48,7 +85,6 @@ object AlarmScheduler {
             set(Calendar.MILLISECOND, 0)
         }
         if (cal.timeInMillis <= now) cal.add(Calendar.DAY_OF_YEAR, 1)
-        // If specific days are configured, advance to the next matching day (max 7 attempts).
         if (days != 0) {
             var attempts = 0
             while (attempts < 7 && !FrequencyChecker.isDayBitSet(days, cal.get(Calendar.DAY_OF_WEEK))) {
@@ -56,7 +92,7 @@ object AlarmScheduler {
                 attempts++
             }
         }
-        scheduleAt(context, task.id, task.title, cal.timeInMillis)
+        return cal.timeInMillis
     }
 
     fun scheduleAt(context: Context, taskId: String, taskTitle: String, triggerAt: Long) {

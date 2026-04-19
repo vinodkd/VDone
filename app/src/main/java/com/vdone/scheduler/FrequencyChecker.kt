@@ -16,6 +16,9 @@ object FrequencyChecker {
             if (days != 0 && !isDayBitSet(days, calOf(now).get(Calendar.DAY_OF_WEEK))) return false
         }
 
+        // Monthly tasks only surface on the 1st of the month
+        if (task.frequency == "monthly" && calOf(now).get(Calendar.DAY_OF_MONTH) != 1) return false
+
         val lastCompleted = task.lastCompletedAt ?: return true  // never done → always due
 
         return when (task.frequency) {
