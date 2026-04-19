@@ -7,7 +7,7 @@ Future milestones and ideas, roughly in priority order.
 ## Bugs
 
 - ~~**Snooze/edit conflict**~~: fixed — `updateTask()` now clears `snoozedUntil` on save.
-- **Fixed task time picker resets on edit**: `rememberTimePickerState` initializes before `fixedStart` loads from the ViewModel; fix with `key(fixedStart)` in `TaskDetailScreen.kt`.
+- ~~**Fixed task time picker resets on edit**~~: fixed in v1.0.19 with `key(fixedStart)` in `TaskDetailScreen.kt`.
 
 ---
 
@@ -49,11 +49,12 @@ Future milestones and ideas, roughly in priority order.
 
 ## Ideas / Unscoped
 
-- **Show fixed task time in lists**: Next Tasks and All Tasks rows should display the scheduled time for fixed tasks (currently only shows title).
-- **Conditional offset**: `offsetSeconds` already exists in `ConditionEntity` and DB but UI never sets it and evaluator ignores it. Add duration input (hours + minutes) to Add Condition dialog; update `ConditionEvaluator` to check `now >= refCompletedAt + offsetSeconds`.
+- ~~**Show fixed task time in lists**~~: shipped in v1.0.20 — schedule labels on all task rows.
+- ~~**Conditional offset**~~: shipped in v1.0.21 — hours+minutes input in Add Condition dialog; evaluator enforces the offset.
+- ~~**Monthly tasks alarm on 1st**~~: shipped in v1.0.22 — alarm fires on 1st of month; FrequencyChecker only surfaces monthly tasks on the 1st.
+- ~~**Skip recurring task instance**~~: shipped in v1.0.23 — "Skip this time" button on alarm screen.
 - **Retroactive completion time**: when marking done, optionally back-date `lastCompletedAt`. Useful for conditional chains. Held — may be overkill.
 - **Recur + conditional tasks**: e.g. hiking on Sat/Sun, 1hr after wake-up. Held — needs design.
-- **Skip recurring task instance**: for procrastinators who need multiple reminders — "skip" means "not doing it this time, suppress for current period" without marking it done. Completing normally already handles "done for this period". Implementation: a Skip button that advances `lastCompletedAt` to now (same as done) but sets a `skipped` flag so it doesn't count as a completion in any streak/history.
 - **Countdown reminders before a fixed event**: "remind me every day starting X days before event" so prep happens gradually. Not just 2 reminders — daily from day-N until the event. Design: a `countdownDays` field on fixed tasks; scheduler generates a daily alarm series starting N days out.
 - **Per-task alarm sound**: same sound gets ignored over time. Add a sound picker per task (shown in task detail when schedule mode is fixed or frequency). Store sound URI in `TaskEntity`. `ReminderService` uses the task's sound instead of system default.
 - **Monthly tasks alarm on 1st**: currently monthly tasks show all month with no alarm anchor. Change to: alarm fires on the 1st of each month (if `frequencyTime` set, at that time; otherwise just appears in Next Tasks on the 1st).
