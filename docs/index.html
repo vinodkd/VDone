@@ -78,14 +78,14 @@
 
     /* ── ABOVE-FOLD FEATURES ── */
     .above-fold {
-      max-width: 900px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 24px 24px 0;
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 16px;
     }
-    @media (max-width: 600px) {
+    @media (max-width: 700px) {
       .above-fold { grid-template-columns: 1fr; }
     }
     .persona-card {
@@ -101,6 +101,10 @@
       background: var(--teal-light);
       border-color: #a0d4ce;
     }
+    .persona-card.core {
+      background: #f5f0ff;
+      border-color: #c8b4f0;
+    }
     .persona-card h3 {
       font-size: 0.95rem;
       font-weight: 700;
@@ -111,6 +115,7 @@
     }
     .persona-card.procrastinator h3 { color: #7a3e00; }
     .persona-card.forgetful h3 { color: var(--teal-dark); }
+    .persona-card.core h3 { color: #4a2d8a; }
     .persona-card ul {
       list-style: none;
       font-size: 0.88rem;
@@ -129,6 +134,7 @@
     }
     .persona-card.procrastinator ul li::before { color: #e07820; }
     .persona-card.forgetful ul li::before { color: var(--teal); }
+    .persona-card.core ul li::before { color: #7c4ddb; }
     .persona-card ul li span {
       font-weight: 600;
     }
@@ -249,6 +255,17 @@
       <li><span>Home screen widget</span> <em>— today's tasks without opening the app</em></li>
       <li><span>Open loops</span> <em>— waiting on someone else? set a follow-up date; tracked in the Loops tab</em></li>
       <li><span>Schedule labels on rows</span> <em>— see when each task fires at a glance without opening it</em></li>
+    </ul>
+  </div>
+  <div class="persona-card core">
+    <h3>&#x1F4CB; Everything else</h3>
+    <ul>
+      <li><span>Nested tasks</span> <em>— subtasks to any depth; parent shows progress</em></li>
+      <li><span>Flexible scheduling</span> <em>— fixed date/time, recurring, or condition-based per task</em></li>
+      <li><span>Days-of-week filter</span> <em>— recurring tasks on weekdays, weekends, or custom days</em></li>
+      <li><span>Search</span> <em>— filter by title or notes across all tasks</em></li>
+      <li><span>Show Mode</span> <em>— silence all alarms globally (gigs, meetings, etc.)</em></li>
+      <li><span>100% local</span> <em>— no account, no sync, no tracking</em></li>
     </ul>
   </div>
 </div>
