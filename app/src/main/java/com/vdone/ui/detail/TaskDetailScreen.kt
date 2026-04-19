@@ -55,6 +55,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -257,13 +258,15 @@ private fun ScheduleSection(
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = localToUtcMidnight(fixedStart ?: System.currentTimeMillis())
     )
-    val cal = remember { Calendar.getInstance() }.apply {
+    val cal = Calendar.getInstance().apply {
         timeInMillis = fixedStart ?: System.currentTimeMillis()
     }
-    val timePickerState = rememberTimePickerState(
-        initialHour = cal.get(Calendar.HOUR_OF_DAY),
-        initialMinute = cal.get(Calendar.MINUTE),
-    )
+    val timePickerState = key(fixedStart) {
+        rememberTimePickerState(
+            initialHour = cal.get(Calendar.HOUR_OF_DAY),
+            initialMinute = cal.get(Calendar.MINUTE),
+        )
+    }
     val freqTimePickerState = rememberTimePickerState(
         initialHour = (frequencyTime ?: 480) / 60,   // default 8 AM
         initialMinute = (frequencyTime ?: 480) % 60,
