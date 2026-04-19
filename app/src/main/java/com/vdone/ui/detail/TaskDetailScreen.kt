@@ -165,6 +165,7 @@ fun TaskDetailScreen(
                     frequencyDays = uiState.frequencyDays,
                     frequencyTime = uiState.frequencyTime,
                     fixedStart = uiState.fixedStart,
+                    soundUri = uiState.soundUri,
                     savedConditions = savedConditions,
                     pendingConditions = uiState.pendingConditions,
                     allTasks = allTasks.filter { it.id != taskId && it.parentId == null },
@@ -173,6 +174,7 @@ fun TaskDetailScreen(
                     onSetFrequencyDays = { viewModel.setFrequencyDays(it) },
                     onSetFrequencyTime = { viewModel.setFrequencyTime(it) },
                     onSetFixedStart = { viewModel.setFixedStart(it) },
+                    onSetSoundUri = { viewModel.setSoundUri(it) },
                     onAddCondition = { type, refTaskId, offset -> viewModel.addCondition(type, refTaskId, offset) },
                     onDeleteSavedCondition = { viewModel.deleteSavedCondition(it) },
                     onDeletePendingCondition = { viewModel.deletePendingCondition(it) },
@@ -231,6 +233,7 @@ private fun ScheduleSection(
     frequencyDays: Int?,
     frequencyTime: Int?,
     fixedStart: Long?,
+    soundUri: String?,
     savedConditions: List<ConditionEntity>,
     pendingConditions: List<PendingCondition>,
     allTasks: List<TaskEntity>,
@@ -239,6 +242,7 @@ private fun ScheduleSection(
     onSetFrequencyDays: (Int?) -> Unit,
     onSetFrequencyTime: (Int?) -> Unit,
     onSetFixedStart: (Long?) -> Unit,
+    onSetSoundUri: (String?) -> Unit,
     onAddCondition: (type: String, refTaskId: String?, offsetSeconds: Long) -> Unit,
     onDeleteSavedCondition: (String) -> Unit,
     onDeletePendingCondition: (String) -> Unit,
@@ -354,6 +358,10 @@ private fun ScheduleSection(
             ) {
                 Text(DATE_FMT.format(fixedStart))
             }
+        }
+
+        if (modeIndex == 1 || modeIndex == 2) {
+            SoundPickerRow(soundUri = soundUri, onSetSoundUri = onSetSoundUri)
         }
 
         if (modeIndex == 3) {
@@ -834,6 +842,54 @@ private fun WaitingOnSection(
                     }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SoundPickerRow(soundUri: String?, onSetSoundUri: (String?) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val uri = result.data
+                ?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            onSetSoundUri(uri?.toString())
+        }
+    }
+    val soundName = soundUri
+        ?.let { android.media.RingtoneManager.getRingtone(context, android.net.Uri.parse(it))?.getTitle(context) }
+        ?: "Default alarm"
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            "Alarm sound",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        OutlinedButton(onClick = {
+            val intent = android.content.Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_ALARM)
+                putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                putExtra(
+                    android.media.RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI,
+                    android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM),
+                )
+                if (soundUri != null) {
+                    putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, android.net.Uri.parse(soundUri))
+                }
+            }
+            launcher.launch(intent)
+        }) {
+            Text(soundName)
         }
     }
 }

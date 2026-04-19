@@ -39,9 +39,10 @@ class ReminderService : Service() {
 
         val taskId    = intent?.getStringExtra(EXTRA_TASK_ID)    ?: run { stopSelf(); return START_NOT_STICKY }
         val taskTitle = intent.getStringExtra(EXTRA_TASK_TITLE)  ?: "Task due"
+        val soundUri  = intent.getStringExtra(EXTRA_SOUND_URI)
 
         acquireWakeLock()
-        startAudio()
+        startAudio(soundUri)
         postNotification(taskId, taskTitle)
         launchAlarmScreen(taskId, taskTitle)
 
@@ -106,8 +107,9 @@ class ReminderService : Service() {
         )
     }
 
-    private fun startAudio() {
-        val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+    private fun startAudio(soundUri: String?) {
+        val uri = soundUri?.let { android.net.Uri.parse(it) }
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         mediaPlayer = MediaPlayer().apply {
             try {
                 setDataSource(applicationContext, uri)
@@ -153,14 +155,16 @@ class ReminderService : Service() {
     companion object {
         const val EXTRA_TASK_ID    = "task_id"
         const val EXTRA_TASK_TITLE = "task_title"
+        const val EXTRA_SOUND_URI  = "sound_uri"
         const val ACTION_DISMISS   = "com.vdone.ALARM_DISMISS"
         const val ACTION_SNOOZE    = "com.vdone.ALARM_SNOOZE"
 
-        fun start(context: Context, taskId: String, taskTitle: String) {
+        fun start(context: Context, taskId: String, taskTitle: String, soundUri: String? = null) {
             context.startForegroundService(
                 Intent(context, ReminderService::class.java).apply {
                     putExtra(EXTRA_TASK_ID, taskId)
                     putExtra(EXTRA_TASK_TITLE, taskTitle)
+                    if (soundUri != null) putExtra(EXTRA_SOUND_URI, soundUri)
                 }
             )
         }

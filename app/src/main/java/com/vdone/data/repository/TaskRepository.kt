@@ -35,10 +35,11 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         fixedStart: Long? = null,
         waitingOn: String? = null,
         followUpAt: Long? = null,
+        soundUri: String? = null,
     ) {
         createTaskWithId(
             UUID.randomUUID().toString(), title, notes, parentId,
-            scheduleMode, frequency, frequencyDays, frequencyTime, fixedStart, waitingOn, followUpAt,
+            scheduleMode, frequency, frequencyDays, frequencyTime, fixedStart, waitingOn, followUpAt, soundUri,
         )
     }
 
@@ -54,6 +55,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         fixedStart: Long? = null,
         waitingOn: String? = null,
         followUpAt: Long? = null,
+        soundUri: String? = null,
     ) {
         val now = System.currentTimeMillis()
         val entity = TaskEntity(
@@ -72,6 +74,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
             snoozedUntil = null,
             waitingOn = waitingOn,
             followUpAt = followUpAt,
+            soundUri = soundUri,
             createdAt = now,
             updatedAt = now,
         )

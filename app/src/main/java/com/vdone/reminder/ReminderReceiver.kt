@@ -56,7 +56,8 @@ class ReminderReceiver : BroadcastReceiver() {
             }
         } else {
             // Regular alarm — hand off to ReminderService which owns audio + notification.
-            ReminderService.start(context, taskId, taskTitle)
+            val soundUri = intent.getStringExtra(AlarmScheduler.EXTRA_SOUND_URI)
+            ReminderService.start(context, taskId, taskTitle, soundUri)
         }
     }
 }

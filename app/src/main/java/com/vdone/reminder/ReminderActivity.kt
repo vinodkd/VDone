@@ -124,7 +124,7 @@ class ReminderActivity : ComponentActivity() {
                             listOf(5, 10, 15).forEach { minutes ->
                                 OutlinedButton(onClick = {
                                     val snoozeAt = System.currentTimeMillis() + minutes * 60_000L
-                                    AlarmScheduler.scheduleAt(this@ReminderActivity, taskId, taskTitle, snoozeAt)
+                                    AlarmScheduler.scheduleAt(this@ReminderActivity, taskId, taskTitle, snoozeAt, alarmingTask?.soundUri)
                                     lifecycleScope.launch { repository.setSnooze(taskId, snoozeAt) }
                                     ReminderService.snooze(this@ReminderActivity)
                                     finish()

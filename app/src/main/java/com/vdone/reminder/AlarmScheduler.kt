@@ -19,10 +19,11 @@ private fun showIntent(context: Context): PendingIntent =
 
 object AlarmScheduler {
 
-    const val EXTRA_TASK_ID = "task_id"
+    const val EXTRA_TASK_ID    = "task_id"
     const val EXTRA_TASK_TITLE = "task_title"
     const val EXTRA_WAITING_ON = "waiting_on"
     const val EXTRA_IS_FOLLOWUP = "is_followup"
+    const val EXTRA_SOUND_URI  = "sound_uri"
 
     fun schedule(context: Context, task: TaskEntity) {
         val triggerAt = task.fixedStart ?: return
@@ -32,7 +33,7 @@ object AlarmScheduler {
 
         am.setAlarmClock(
             AlarmManager.AlarmClockInfo(triggerAt, showIntent(context)),
-            pendingIntent(context, task.id, task.title),
+            pendingIntent(context, task.id, task.title, task.soundUri),
         )
     }
 
@@ -45,7 +46,7 @@ object AlarmScheduler {
             "yearly"  -> nextPeriodicTrigger(minuteOfDay, now, Calendar.YEAR, 1)
             else      -> nextDailyTrigger(minuteOfDay, task.frequencyDays ?: 0, now)
         }
-        scheduleAt(context, task.id, task.title, triggerAt)
+        scheduleAt(context, task.id, task.title, triggerAt, task.soundUri)
     }
 
     private fun nextMonthlyTrigger(minuteOfDay: Int, now: Long): Long {
@@ -95,18 +96,18 @@ object AlarmScheduler {
         return cal.timeInMillis
     }
 
-    fun scheduleAt(context: Context, taskId: String, taskTitle: String, triggerAt: Long) {
+    fun scheduleAt(context: Context, taskId: String, taskTitle: String, triggerAt: Long, soundUri: String? = null) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) return
         am.setAlarmClock(
             AlarmManager.AlarmClockInfo(triggerAt, showIntent(context)),
-            pendingIntent(context, taskId, taskTitle),
+            pendingIntent(context, taskId, taskTitle, soundUri),
         )
     }
 
     fun cancel(context: Context, taskId: String) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        am.cancel(pendingIntent(context, taskId, ""))
+        am.cancel(pendingIntent(context, taskId, "", null))
     }
 
     fun scheduleFollowUp(context: Context, task: TaskEntity) {
@@ -143,10 +144,11 @@ object AlarmScheduler {
         )
     }
 
-    fun pendingIntent(context: Context, taskId: String, taskTitle: String): PendingIntent {
+    fun pendingIntent(context: Context, taskId: String, taskTitle: String, soundUri: String? = null): PendingIntent {
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             putExtra(EXTRA_TASK_ID, taskId)
             putExtra(EXTRA_TASK_TITLE, taskTitle)
+            if (soundUri != null) putExtra(EXTRA_SOUND_URI, soundUri)
         }
         return PendingIntent.getBroadcast(
             context,

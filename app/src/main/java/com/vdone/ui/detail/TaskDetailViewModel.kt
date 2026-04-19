@@ -32,6 +32,7 @@ data class TaskDetailUiState(
     val frequencyDays: Int? = null,      // bitmask; null/0 = all days (only used for daily)
     val frequencyTime: Int? = null,      // minutes from midnight; null = anytime
     val fixedStart: Long? = null,
+    val soundUri: String? = null,
     val pendingConditions: List<PendingCondition> = emptyList(),
     val waitingOn: String = "",
     val followUpAt: Long? = null,
@@ -82,6 +83,7 @@ class TaskDetailViewModel(
                         frequencyDays = task.frequencyDays,
                         frequencyTime = task.frequencyTime,
                         fixedStart = task.fixedStart,
+                        soundUri = task.soundUri,
                         waitingOn = task.waitingOn ?: "",
                         followUpAt = task.followUpAt,
                         lastRemindedAt = task.lastRemindedAt,
@@ -114,6 +116,10 @@ class TaskDetailViewModel(
 
     fun setWaitingOn(value: String) { _uiState.value = _uiState.value.copy(waitingOn = value) }
     fun setFollowUpAt(value: Long?) { _uiState.value = _uiState.value.copy(followUpAt = value) }
+
+    fun setSoundUri(value: String?) {
+        _uiState.value = _uiState.value.copy(soundUri = value)
+    }
 
     fun setFixedStart(value: Long?) {
         _uiState.value = _uiState.value.copy(
@@ -203,6 +209,7 @@ class TaskDetailViewModel(
                     fixedStart = state.fixedStart,
                     waitingOn = state.waitingOn.trim().ifBlank { null },
                     followUpAt = state.followUpAt,
+                    soundUri = state.soundUri,
                 )
                 state.pendingConditions.forEach { pending ->
                     conditionRepository.addCondition(newId, pending.type, pending.refTaskId, pending.offsetSeconds)
@@ -220,6 +227,7 @@ class TaskDetailViewModel(
                         fixedStart = state.fixedStart,
                         waitingOn = state.waitingOn.trim().ifBlank { null },
                         followUpAt = state.followUpAt,
+                        soundUri = state.soundUri,
                     )
                 )
             }
