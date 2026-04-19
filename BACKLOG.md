@@ -9,6 +9,7 @@ Future milestones and ideas, roughly in priority order.
 - ~~**Snooze/edit conflict**~~: fixed — `updateTask()` now clears `snoozedUntil` on save.
 - ~~**Fixed task time picker resets on edit**~~: fixed in v1.0.19 with `key(fixedStart)` in `TaskDetailScreen.kt`.
 - **Skip only on alarm screen**: "Skip this time" for recurring tasks is only reachable via the full-screen alarm. Should also appear in the Next Tasks row (swipe action or button) and in the task edit screen.
+- **Rebrand to periwinkle blue**: replace the teal/green color scheme with periwinkle blue across the Android app (`ui/theme/`) and the website (`docs/index.html`).
 
 ---
 
