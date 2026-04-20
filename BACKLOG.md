@@ -86,14 +86,14 @@ Currently the lower-level time units are either implicit (weekly fires on the sa
 
 ## Ideas / Unscoped
 
-- **"Started" / in-progress task state**: a third status between "todo" and "done" so a task being actively worked on stops alarming without being marked complete. Motivating case: task takes 30+ min; currently user snoozes repeatedly. Design questions to resolve before building:
-  - **Entry points**: "Start" button on alarm screen (alongside snooze/done), swipe action on Next Tasks card, and/or button in task detail?
-  - **Alarm behavior**: cancel the alarm when started; no further alarms until done or explicitly re-enabled. For recurring tasks, the alarm must re-arm on next cycle when done.
-  - **UI indicators**: show an "in progress" badge/color on the task row in Next Tasks and All Tasks so it's visually distinct from both todo and done.
-  - **Abandoning**: if the user never marks it done, the task stays "started" indefinitely — need a way to revert to "todo" (e.g. a "Stop / not done" action, or auto-revert at end of day).
-  - **Duration tracking**: the gap between start and done timestamps could be stored (`startedAt` field) for future analytics, but should not block the initial feature.
-  - **Conditions / defer**: a task deferred behind a "started" task — should it fire immediately since the blocking task is underway, or wait for "done"? Probably wait for "done" (same as today).
-  - **DB change**: add `startedAt: Long?` to `TaskEntity`; status gains a third value `"doing"`. Needs migration.
+- **"Started" / in-progress task state** — fully designed, ready to build when M14 is done:
+  - **New status**: `"doing"` alongside `"todo"` and `"done"`. New DB field `startedAt: Long?` (records when started; duration = doneAt − startedAt; also counts procrastination attempts). `autoDone: Boolean` flag distinguishes auto-completed from explicitly marked done.
+  - **Entry points**: "Start" button on alarm screen (alongside Snooze/Done); button on Next Tasks / Today's Tasks card (alongside Done/Skip).
+  - **Alarm behavior**: cancel alarm on start. While "doing", suppress any re-alarm silently. On done/auto-done, advance recurring schedule and trigger unblocked conditional tasks as normal.
+  - **Conditions / defer**: tasks deferred behind a "doing" task wait for **done** (including auto-done), not for "started". Same as current behavior.
+  - **Auto-complete at EOD**: tasks still "doing" at end of day are auto-completed (`autoDone = true`, status = "done"). Recurring tasks advance their schedule. This fires **lazily on app foreground** (`onResume`): check for `status == "doing"` where `startedAt < today's midnight`; complete them before any UI renders. While the app is actively in the foreground (e.g. late-night cramming), no auto-complete fires — task stays in Doing until the user marks it done or leaves and returns. The 60s tick handles all time-sensitive UI updates while in-app.
+  - **Tab structure change** (part of M14 / M17 combined): replace current 3-tab layout (Next Tasks / All Tasks / Loops) with 5 tabs: **Plan** (all tasks including future; replaces All Tasks) · **Next** (today + overdue) · **Doing** (in-progress tasks) · **Waiting** (replaces Loops) · **Done** (today's completions only).
+  - **DB change**: add `startedAt: Long?` and `autoDone: Boolean` to `TaskEntity`; migration needed.
 
 
 
