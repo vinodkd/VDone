@@ -2,6 +2,24 @@
 
 ---
 
+## v1.0.26 — Day label fix
+
+- Weekday chips now show **Su M T W Th F Sa** — Saturday is unambiguous on narrow screens
+
+---
+
+## v1.0.25 — Periwinkle rebrand
+
+- App theme and website updated from teal/green to periwinkle blue
+
+---
+
+## v1.0.24 — Per-task alarm sound
+
+- **Custom alarm ringtone per task** — fixed and recurring tasks now have a sound picker in the edit screen; choose any system ringtone; defaults to the system default alarm sound
+
+---
+
 ## v1.0.19 — v1.0.23
 
 **Scheduling improvements and alarm screen upgrades**

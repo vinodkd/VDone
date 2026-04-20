@@ -895,7 +895,7 @@ private fun SoundPickerRow(soundUri: String?, onSetSoundUri: (String?) -> Unit) 
 }
 
 // Calendar.DAY_OF_WEEK: Sun=1..Sat=7; bitmask bit = 1 shl (dow-1)
-private val DAY_LABELS = listOf("Su", "M", "T", "W", "Th", "F", "S")
+private val DAY_LABELS = listOf("Su", "M", "T", "W", "Th", "F", "Sa")
 private val WEEKDAYS_MASK = (2..6).fold(0) { acc, dow -> acc or (1 shl (dow - 1)) } // Mon–Fri = 62
 
 @Composable

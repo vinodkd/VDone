@@ -8,9 +8,11 @@ Future milestones and ideas, roughly in priority order.
 
 - ~~**Snooze/edit conflict**~~: fixed — `updateTask()` now clears `snoozedUntil` on save.
 - ~~**Fixed task time picker resets on edit**~~: fixed in v1.0.19 with `key(fixedStart)` in `TaskDetailScreen.kt`.
-- **Skip only on alarm screen**: "Skip this time" for recurring tasks is only reachable via the full-screen alarm. Should also appear in the Next Tasks row (swipe action or button) and in the task edit screen.
+- **Skip only on alarm screen**: "Skip this time" for recurring tasks is only reachable via the full-screen alarm. Should also appear as a swipe action or button on the Today's Tasks row.
 - ~~**Rebrand to periwinkle blue**~~: shipped in v1.0.25 — app theme and website updated.
 - **App icon rebrand**: launcher icon and notification icon still use the old green/teal. Needs new icon assets in periwinkle blue.
+- **Conditional alarms never fire proactively**: condition-based tasks are only surfaced via the 60s HomeViewModel poll; no alarm is ever scheduled for them. When a blocking task is marked done, the app should immediately schedule an alarm for any task whose conditions are now met.
+- **Show mode silently drops alarms**: when Show Mode is active, `ReminderReceiver` discards the alarm with no rescheduling and no indication to the user. Suppressed alarms should either be listed somewhere (e.g. an "overdue while in Show Mode" badge) or rescheduled to fire immediately when Show Mode is turned off.
 
 ---
 
@@ -37,6 +39,28 @@ Future milestones and ideas, roughly in priority order.
 - ~~Tap task → opens edit screen; tap + → new task~~
 - ~~Refreshes immediately on task create/update/toggle~~
 - ~~Mark Done button added to task detail screen~~
+
+---
+
+## M14 — Today's Tasks view redesign
+
+- Rename "Next Tasks" tab → "Today's Tasks"; rename "All Tasks" tab → "Planned Tasks"
+- Today's Tasks filter: show only tasks due today **or overdue** (not future-dated); label overdue items distinctly
+- Remove mark-done checkbox from Planned Tasks rows (recurring tasks are templates, not instances); done/skip/snooze live in Today's Tasks only
+- Add `isActive: Boolean` flag to `TaskEntity` (DB migration); deactivated tasks never appear in Today's Tasks or fire alarms
+- **Deactivate** (ban icon) on every task row and in the edit screen, uniform across all task types; tapping toggles active/inactive
+- **Delete** moves to long-press; long-press enters multi-select mode — checkboxes replace the done indicator, toolbar shows a delete action for all selected tasks; exit selection mode via back or deselecting all
+- Fix the root issue from issue #5: a recurring task marked done in Planned Tasks currently leaves its next alarm showing in Today's Tasks with no visual distinction — the filter + status model change above resolves this
+
+---
+
+## M15 — Recurring task default alarm times
+
+- Daily recurring tasks with no time set: default alarm to **08:00 the next day**
+- Weekly recurring tasks with no time set: default alarm to **Monday 08:00**
+- Monthly recurring tasks with no time set: default alarm to **1st of the month 08:00**
+- Yearly recurring tasks with no time set: default alarm to **08:00 on the anniversary date**
+- Applied at save time in `TaskDetailViewModel`; no change needed if a time is already set
 
 ---
 
