@@ -114,6 +114,12 @@ class HomeViewModel(
         }
     }
 
+    fun skip(task: TaskEntity) {
+        viewModelScope.launch {
+            repository.skipFrequencyTask(task)
+        }
+    }
+
     class Factory(
         private val repository: TaskRepository,
         private val conditionRepository: ConditionRepository,

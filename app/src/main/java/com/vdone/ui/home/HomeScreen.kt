@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -105,6 +108,7 @@ fun HomeScreen(
                         task = task,
                         scheduleLabel = scheduleLabels[task.id],
                         onDone = { viewModel.complete(task) },
+                        onSkip = { viewModel.skip(task) },
                         onEdit = { onEditTask(task.id) },
                     )
                 }
@@ -119,6 +123,7 @@ private fun DueTaskCard(
     task: TaskEntity,
     scheduleLabel: String?,
     onDone: () -> Unit,
+    onSkip: () -> Unit,
     onEdit: () -> Unit,
 ) {
     val now = System.currentTimeMillis()
@@ -173,18 +178,26 @@ private fun DueTaskCard(
                     )
                 }
             }
-            Button(
-                onClick = onDone,
+            Column(
                 modifier = Modifier.padding(start = 12.dp),
+                horizontalAlignment = Alignment.End,
             ) {
-                Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .padding(end = 2.dp),
-                )
-                Text("Done")
+                Button(onClick = onDone) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(end = 2.dp),
+                    )
+                    Text("Done")
+                }
+                if (task.scheduleMode == "frequency") {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedButton(onClick = onSkip) {
+                        Text("Skip")
+                    }
+                }
             }
         }
     }

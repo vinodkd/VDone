@@ -2,6 +2,12 @@
 
 ---
 
+## v1.0.27 — Skip on Next Tasks
+
+- **Skip this time** button now appears directly on recurring task cards in the Next Tasks tab — no need to wait for the full-screen alarm
+
+---
+
 ## v1.0.26 — Day label fix
 
 - Weekday chips now show **Su M T W Th F Sa** — Saturday is unambiguous on narrow screens

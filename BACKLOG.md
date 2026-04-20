@@ -8,7 +8,7 @@ Future milestones and ideas, roughly in priority order.
 
 - ~~**Snooze/edit conflict**~~: fixed — `updateTask()` now clears `snoozedUntil` on save.
 - ~~**Fixed task time picker resets on edit**~~: fixed in v1.0.19 with `key(fixedStart)` in `TaskDetailScreen.kt`.
-- **Skip only on alarm screen**: "Skip this time" for recurring tasks is only reachable via the full-screen alarm. Should also appear as a swipe action or button on the Today's Tasks row.
+- ~~**Skip only on alarm screen**~~: fixed in v1.0.27 — Skip button now appears on recurring task cards in Next Tasks.
 - ~~**Rebrand to periwinkle blue**~~: shipped in v1.0.25 — app theme and website updated.
 - **App icon rebrand**: launcher icon and notification icon still use the old green/teal. Needs new icon assets in periwinkle blue.
 - **Conditional alarms never fire proactively**: condition-based tasks are only surfaced via the 60s HomeViewModel poll; no alarm is ever scheduled for them. When a blocking task is marked done, the app should immediately schedule an alarm for any task whose conditions are now met.
