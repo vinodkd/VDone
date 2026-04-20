@@ -194,6 +194,10 @@ class TaskDetailViewModel(
     fun save() {
         val state = _uiState.value
         if (state.title.isBlank()) return
+        // Default recurring tasks to 08:00 if no time was explicitly set, so
+        // an alarm is always scheduled (scheduler returns early when time is null).
+        val effectiveFrequencyTime = if (state.scheduleMode == "frequency" && state.frequencyTime == null)
+            8 * 60 else state.frequencyTime
         viewModelScope.launch {
             if (state.isNew) {
                 val newId = UUID.randomUUID().toString()
@@ -205,7 +209,7 @@ class TaskDetailViewModel(
                     scheduleMode = state.scheduleMode,
                     frequency = state.frequency,
                     frequencyDays = state.frequencyDays,
-                    frequencyTime = state.frequencyTime,
+                    frequencyTime = effectiveFrequencyTime,
                     fixedStart = state.fixedStart,
                     waitingOn = state.waitingOn.trim().ifBlank { null },
                     followUpAt = state.followUpAt,
@@ -223,7 +227,7 @@ class TaskDetailViewModel(
                         scheduleMode = state.scheduleMode,
                         frequency = state.frequency,
                         frequencyDays = state.frequencyDays,
-                        frequencyTime = state.frequencyTime,
+                        frequencyTime = effectiveFrequencyTime,
                         fixedStart = state.fixedStart,
                         waitingOn = state.waitingOn.trim().ifBlank { null },
                         followUpAt = state.followUpAt,

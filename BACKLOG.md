@@ -54,13 +54,23 @@ Future milestones and ideas, roughly in priority order.
 
 ---
 
-## M15 — Recurring task default alarm times
+## ~~M15 — Recurring task default alarm times~~ (done)
 
-- Daily recurring tasks with no time set: default alarm to **08:00 the next day**
-- Weekly recurring tasks with no time set: default alarm to **Monday 08:00**
-- Monthly recurring tasks with no time set: default alarm to **1st of the month 08:00**
-- Yearly recurring tasks with no time set: default alarm to **08:00 on the anniversary date**
-- Applied at save time in `TaskDetailViewModel`; no change needed if a time is already set
+- ~~Daily recurring tasks with no time set: default alarm to **08:00 the next day**~~
+- ~~Weekly/monthly/yearly: default to **08:00**; monthly fires on the 1st~~
+- ~~Shipped in v1.0.28~~
+
+---
+
+## M16 — Full schedule specification for weekly/monthly/yearly tasks
+
+Currently the lower-level time units are either implicit (weekly fires on the same weekday as creation; yearly fires on the same month+day as creation) or hardcoded (monthly always fires on the 1st). Users should be able to specify them explicitly in the task edit screen:
+
+- **Weekly**: add a single day-of-week picker (Mon–Sun) — "fire every week on [day]". Stored in a new `frequencyDayOfWeek` field (or reuse `frequencyDays` bitmask limited to one selection).
+- **Monthly**: add a day-of-month picker (1–28, plus "last day of month") — currently hardcoded to 1st in `nextMonthlyTrigger`.
+- **Yearly**: add a month + day-of-month picker — currently fires on the anniversary of task creation.
+- All three should default to today's equivalent (current weekday / current day-of-month / current month+day) so existing behavior is preserved if the user doesn't change them.
+- Requires DB migration and updates to `AlarmScheduler`, `FrequencyChecker`, and `TaskDetailScreen`.
 
 ---
 

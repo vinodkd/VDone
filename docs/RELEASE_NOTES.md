@@ -2,6 +2,12 @@
 
 ---
 
+## v1.0.28 — Default alarm time for recurring tasks
+
+- Recurring tasks saved without an explicit time now default to **08:00** — they will always fire an alarm rather than silently never appearing
+
+---
+
 ## v1.0.27 — Skip on Next Tasks
 
 - **Skip this time** button now appears directly on recurring task cards in the Next Tasks tab — no need to wait for the full-screen alarm
