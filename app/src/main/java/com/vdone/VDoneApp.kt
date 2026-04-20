@@ -37,7 +37,7 @@ class VDoneApp : Application() {
     }
 
     val taskRepository: TaskRepository by lazy {
-        TaskRepository(database.taskDao(), this)
+        TaskRepository(database.taskDao(), database.conditionDao(), this)
     }
 
     val conditionRepository: ConditionRepository by lazy {

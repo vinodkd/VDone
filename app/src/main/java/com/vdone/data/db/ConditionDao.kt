@@ -15,6 +15,9 @@ interface ConditionDao {
     @Query("SELECT * FROM conditions WHERE taskId = :taskId")
     suspend fun getConditionsForTaskOnce(taskId: String): List<ConditionEntity>
 
+    @Query("SELECT * FROM conditions WHERE refTaskId = :refTaskId AND type = 'after_task_done'")
+    suspend fun getConditionsReferencingTask(refTaskId: String): List<ConditionEntity>
+
     @Query("SELECT * FROM conditions")
     fun getAllConditions(): Flow<List<ConditionEntity>>
 

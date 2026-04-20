@@ -11,7 +11,7 @@ Future milestones and ideas, roughly in priority order.
 - ~~**Skip only on alarm screen**~~: fixed in v1.0.27 — Skip button now appears on recurring task cards in Next Tasks.
 - ~~**Rebrand to periwinkle blue**~~: shipped in v1.0.25 — app theme and website updated.
 - **App icon rebrand**: launcher icon and notification icon still use the old green/teal. Needs new icon assets in periwinkle blue.
-- **Conditional alarms never fire proactively**: condition-based tasks are only surfaced via the 60s HomeViewModel poll; no alarm is ever scheduled for them. When a blocking task is marked done, the app should immediately schedule an alarm for any task whose conditions are now met.
+- ~~**Conditional alarms never fire proactively**~~: fixed in v1.0.29 — alarm is scheduled immediately when the blocking task is marked done.
 - **Show mode silently drops alarms**: when Show Mode is active, `ReminderReceiver` discards the alarm with no rescheduling and no indication to the user. Suppressed alarms should either be listed somewhere (e.g. an "overdue while in Show Mode" badge) or rescheduled to fire immediately when Show Mode is turned off.
 
 ---
@@ -85,6 +85,17 @@ Currently the lower-level time units are either implicit (weekly fires on the sa
 ---
 
 ## Ideas / Unscoped
+
+- **"Started" / in-progress task state**: a third status between "todo" and "done" so a task being actively worked on stops alarming without being marked complete. Motivating case: task takes 30+ min; currently user snoozes repeatedly. Design questions to resolve before building:
+  - **Entry points**: "Start" button on alarm screen (alongside snooze/done), swipe action on Next Tasks card, and/or button in task detail?
+  - **Alarm behavior**: cancel the alarm when started; no further alarms until done or explicitly re-enabled. For recurring tasks, the alarm must re-arm on next cycle when done.
+  - **UI indicators**: show an "in progress" badge/color on the task row in Next Tasks and All Tasks so it's visually distinct from both todo and done.
+  - **Abandoning**: if the user never marks it done, the task stays "started" indefinitely — need a way to revert to "todo" (e.g. a "Stop / not done" action, or auto-revert at end of day).
+  - **Duration tracking**: the gap between start and done timestamps could be stored (`startedAt` field) for future analytics, but should not block the initial feature.
+  - **Conditions / defer**: a task deferred behind a "started" task — should it fire immediately since the blocking task is underway, or wait for "done"? Probably wait for "done" (same as today).
+  - **DB change**: add `startedAt: Long?` to `TaskEntity`; status gains a third value `"doing"`. Needs migration.
+
+
 
 - ~~**Show fixed task time in lists**~~: shipped in v1.0.20 — schedule labels on all task rows.
 - ~~**Conditional offset**~~: shipped in v1.0.21 — hours+minutes input in Add Condition dialog; evaluator enforces the offset.

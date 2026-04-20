@@ -1,14 +1,20 @@
 package com.vdone.data.repository
 
 import android.content.Context
+import com.vdone.data.db.ConditionDao
 import com.vdone.data.db.TaskDao
 import com.vdone.data.db.TaskEntity
 import com.vdone.reminder.AlarmScheduler
+import com.vdone.scheduler.ConditionEvaluator
 import com.vdone.widget.DueTasksWidget
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
-class TaskRepository(private val dao: TaskDao, private val context: Context) {
+class TaskRepository(
+    private val dao: TaskDao,
+    private val conditionDao: ConditionDao,
+    private val context: Context,
+) {
 
     fun getAllTasks(): Flow<List<TaskEntity>> = dao.getAllTasks()
 
@@ -104,11 +110,13 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
     }
 
     suspend fun toggleStatus(task: TaskEntity) {
+        val now = System.currentTimeMillis()
         val newStatus = if (task.status == "done") "todo" else "done"
-        dao.update(task.copy(status = newStatus, updatedAt = System.currentTimeMillis()))
+        dao.update(task.copy(status = newStatus, updatedAt = now))
         if (newStatus == "done") {
             AlarmScheduler.cancel(context, task.id)
             AlarmScheduler.cancelFollowUp(context, task.id)
+            scheduleUnblockedTasks(task.id, now)
         }
         DueTasksWidget.refresh(context)
     }
@@ -133,6 +141,7 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         val now = System.currentTimeMillis()
         dao.update(task.copy(status = "todo", lastCompletedAt = now, updatedAt = now))
         if (task.frequencyTime != null) AlarmScheduler.scheduleFrequency(context, task)
+        scheduleUnblockedTasks(task.id, now)
     }
 
     suspend fun skipFrequencyTask(task: TaskEntity) {
@@ -142,6 +151,32 @@ class TaskRepository(private val dao: TaskDao, private val context: Context) {
         dao.update(task.copy(lastCompletedAt = now, updatedAt = now))
         if (task.frequencyTime != null) AlarmScheduler.scheduleFrequency(context, task)
         DueTasksWidget.refresh(context)
+    }
+
+    // When a task is marked done, schedule alarms for any condition-based tasks that are now unblocked.
+    private suspend fun scheduleUnblockedTasks(completedTaskId: String, completedAt: Long) {
+        val dependentConditions = conditionDao.getConditionsReferencingTask(completedTaskId)
+        if (dependentConditions.isEmpty()) return
+
+        val taskMap = dao.getAllTasksOnce().associateBy { it.id }
+
+        for (condition in dependentConditions) {
+            val dependent = taskMap[condition.taskId] ?: continue
+            if (dependent.status == "done") continue
+            if (dependent.scheduleMode != "condition") continue
+
+            // Check all other conditions for this task are already met
+            val allConditions = conditionDao.getConditionsForTaskOnce(dependent.id)
+            val otherConditions = allConditions.filter { it.id != condition.id }
+            if (!ConditionEvaluator.areAllMet(otherConditions, taskMap, completedAt)) continue
+
+            // Schedule at completedAt + this condition's offset (minimum 2s from now)
+            val triggerAt = maxOf(
+                completedAt + condition.offsetSeconds * 1000L,
+                System.currentTimeMillis() + 2_000L,
+            )
+            AlarmScheduler.scheduleAt(context, dependent.id, dependent.title, triggerAt, dependent.soundUri)
+        }
     }
 
     suspend fun deleteTask(task: TaskEntity) {

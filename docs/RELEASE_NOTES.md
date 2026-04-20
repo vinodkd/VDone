@@ -2,6 +2,12 @@
 
 ---
 
+## v1.0.29 — Conditional alarms fire proactively
+
+- Condition-based tasks now schedule an alarm immediately when their blocking task is marked done — no more waiting for the 60-second poll to surface them
+
+---
+
 ## v1.0.28 — Default alarm time for recurring tasks
 
 - Recurring tasks saved without an explicit time now default to **08:00** — they will always fire an alarm rather than silently never appearing
