@@ -2,6 +2,12 @@
 
 ---
 
+## v1.0.30 — Show Mode no longer silently drops alarms
+
+- Alarms that fire while Show Mode is active are now queued; turning Show Mode off reschedules them immediately so nothing is missed
+
+---
+
 ## v1.0.29 — Conditional alarms fire proactively
 
 - Condition-based tasks now schedule an alarm immediately when their blocking task is marked done — no more waiting for the 60-second poll to surface them

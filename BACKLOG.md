@@ -12,7 +12,7 @@ Future milestones and ideas, roughly in priority order.
 - ~~**Rebrand to periwinkle blue**~~: shipped in v1.0.25 — app theme and website updated.
 - **App icon rebrand**: launcher icon and notification icon still use the old green/teal. Needs new icon assets in periwinkle blue.
 - ~~**Conditional alarms never fire proactively**~~: fixed in v1.0.29 — alarm is scheduled immediately when the blocking task is marked done.
-- **Show mode silently drops alarms**: when Show Mode is active, `ReminderReceiver` discards the alarm with no rescheduling and no indication to the user. Suppressed alarms should either be listed somewhere (e.g. an "overdue while in Show Mode" badge) or rescheduled to fire immediately when Show Mode is turned off.
+- ~~**Show mode silently drops alarms**~~: fixed in v1.0.30 — suppressed alarms are queued and rescheduled immediately when Show Mode is turned off.
 
 ---
 

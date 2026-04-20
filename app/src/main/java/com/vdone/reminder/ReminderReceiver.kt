@@ -17,7 +17,10 @@ class ReminderReceiver : BroadcastReceiver() {
         val taskId    = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_ID)    ?: return
         val taskTitle = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_TITLE) ?: "Task due"
 
-        if (AppSettings.isShowMode(context)) return
+        if (AppSettings.isShowMode(context)) {
+            AppSettings.addSuppressedTask(context, taskId)
+            return
+        }
 
         val isFollowUp = intent.getBooleanExtra(AlarmScheduler.EXTRA_IS_FOLLOWUP, false)
 

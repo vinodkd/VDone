@@ -33,7 +33,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.vdone.VDoneApp
+import com.vdone.reminder.AlarmScheduler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -45,6 +50,7 @@ import com.vdone.BuildConfig
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var reminderSound by remember { mutableStateOf(AppSettings.isReminderSound(context)) }
     var reminderVibrate by remember { mutableStateOf(AppSettings.isReminderVibrate(context)) }
     var showMode by remember { mutableStateOf(AppSettings.isShowMode(context)) }
@@ -125,6 +131,21 @@ fun SettingsScreen(onBack: () -> Unit) {
                         onCheckedChange = { enabled ->
                             showMode = enabled
                             AppSettings.setShowMode(context, enabled)
+                            if (!enabled) {
+                                // Reschedule any alarms that were suppressed during the show
+                                scope.launch(Dispatchers.IO) {
+                                    val repo = (context.applicationContext as VDoneApp).taskRepository
+                                    val ids = AppSettings.getSuppressedTaskIds(context)
+                                    val fireAt = System.currentTimeMillis() + 2_000L
+                                    ids.forEach { id ->
+                                        val task = repo.getTaskById(id) ?: return@forEach
+                                        if (task.status != "done") {
+                                            AlarmScheduler.scheduleAt(context, task.id, task.title, fireAt, task.soundUri)
+                                        }
+                                    }
+                                    AppSettings.clearSuppressedTasks(context)
+                                }
+                            }
                         },
                     )
                 }
