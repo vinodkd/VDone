@@ -42,15 +42,15 @@ Future milestones and ideas, roughly in priority order.
 
 ---
 
-## M14 — Today's Tasks view redesign
+## M14 — Pre-redesign improvements (independent of tab structure)
 
-- Rename "Next Tasks" tab → "Today's Tasks"; rename "All Tasks" tab → "Planned Tasks"
-- Today's Tasks filter: show only tasks due today **or overdue** (not future-dated); label overdue items distinctly
-- Remove mark-done checkbox from Planned Tasks rows (recurring tasks are templates, not instances); done/skip/snooze live in Today's Tasks only
-- Add `isActive: Boolean` flag to `TaskEntity` (DB migration); deactivated tasks never appear in Today's Tasks or fire alarms
-- **Deactivate** (ban icon) on every task row and in the edit screen, uniform across all task types; tapping toggles active/inactive
-- **Delete** moves to long-press; long-press enters multi-select mode — checkboxes replace the done indicator, toolbar shows a delete action for all selected tasks; exit selection mode via back or deselecting all
-- Fix the root issue from issue #5: a recurring task marked done in Planned Tasks currently leaves its next alarm showing in Today's Tasks with no visual distinction — the filter + status model change above resolves this
+These items from the original M14 stand on their own and should be done before the full 5-tab redesign (M17):
+
+- **Filter Next Tasks to today + overdue**: remove future-dated tasks from Next Tasks; label overdue items distinctly. Resolves the confusing "tomorrow's task appearing in Next Tasks" issue.
+- **Deactivate flag**: add `isActive: Boolean` to `TaskEntity` (DB migration); deactivated tasks never appear in Next Tasks or fire alarms. Ban icon on every task row and in the edit screen, uniform across all task types.
+- **Multi-select delete**: long-press on a task row enters selection mode — checkboxes appear, toolbar shows a delete action for all selected; back or deselect-all exits. Delete moves to long-press (no dedicated delete icon on rows in normal mode).
+
+Tab renames and "remove done-checkbox from All Tasks" are deferred to M17 to avoid doing them twice.
 
 ---
 
@@ -84,18 +84,31 @@ Currently the lower-level time units are either implicit (weekly fires on the sa
 
 ---
 
+## M17 — 5-tab redesign + Started state
+
+Combines the tab structure overhaul with the "doing" status. Do after M14.
+
+**Tab structure**: replace current 3 tabs (Next Tasks / All Tasks / Loops) with:
+**Plan** · **Next** · **Doing** · **Waiting** · **Done**
+- **Plan**: all tasks including future-dated; replaces All Tasks. No mark-done here — task definitions only.
+- **Next**: today + overdue tasks. Done/Skip/Start actions on cards.
+- **Doing**: tasks currently in progress. Done action only (no Skip).
+- **Waiting**: replaces Loops tab — tasks with a "waiting on" field.
+- **Done**: today's completions only (both explicit and auto-done).
+
+**"Started" / doing status**:
+- New status value `"doing"`. New DB fields: `startedAt: Long?`, `autoDone: Boolean`.
+- **Start**: cancels alarm, moves task to Doing tab. Entry points: alarm screen (alongside Snooze/Done) and Next Tasks card (alongside Done/Skip).
+- **While doing**: suppress any re-alarm silently.
+- **Auto-complete at EOD**: on `Activity.onResume`, check for `status == "doing"` where `startedAt < today's midnight`; mark `autoDone = true`, status = `"done"`, advance recurring schedule, trigger unblocked conditional tasks. No background job needed — fires before UI renders.
+- **Conditions / defer**: wait for `"done"` (including auto-done), not `"doing"`.
+- `startedAt` preserved on auto-done for duration/procrastination tracking later.
+
+**DB change**: add `startedAt: Long?` and `autoDone: Boolean` to `TaskEntity`; migration needed (combine with any other pending migrations at build time).
+
+---
+
 ## Ideas / Unscoped
-
-- **"Started" / in-progress task state** — fully designed, ready to build when M14 is done:
-  - **New status**: `"doing"` alongside `"todo"` and `"done"`. New DB field `startedAt: Long?` (records when started; duration = doneAt − startedAt; also counts procrastination attempts). `autoDone: Boolean` flag distinguishes auto-completed from explicitly marked done.
-  - **Entry points**: "Start" button on alarm screen (alongside Snooze/Done); button on Next Tasks / Today's Tasks card (alongside Done/Skip).
-  - **Alarm behavior**: cancel alarm on start. While "doing", suppress any re-alarm silently. On done/auto-done, advance recurring schedule and trigger unblocked conditional tasks as normal.
-  - **Conditions / defer**: tasks deferred behind a "doing" task wait for **done** (including auto-done), not for "started". Same as current behavior.
-  - **Auto-complete at EOD**: tasks still "doing" at end of day are auto-completed (`autoDone = true`, status = "done"). Recurring tasks advance their schedule. This fires **lazily on app foreground** (`onResume`): check for `status == "doing"` where `startedAt < today's midnight`; complete them before any UI renders. While the app is actively in the foreground (e.g. late-night cramming), no auto-complete fires — task stays in Doing until the user marks it done or leaves and returns. The 60s tick handles all time-sensitive UI updates while in-app.
-  - **Tab structure change** (part of M14 / M17 combined): replace current 3-tab layout (Next Tasks / All Tasks / Loops) with 5 tabs: **Plan** (all tasks including future; replaces All Tasks) · **Next** (today + overdue) · **Doing** (in-progress tasks) · **Waiting** (replaces Loops) · **Done** (today's completions only).
-  - **DB change**: add `startedAt: Long?` and `autoDone: Boolean` to `TaskEntity`; migration needed.
-
-
 
 - ~~**Show fixed task time in lists**~~: shipped in v1.0.20 — schedule labels on all task rows.
 - ~~**Conditional offset**~~: shipped in v1.0.21 — hours+minutes input in Add Condition dialog; evaluator enforces the offset.
