@@ -7,6 +7,8 @@ object AppSettings {
     private const val KEY_SNOOZE_MINUTES = "snooze_minutes"
     private const val KEY_SHOW_MODE = "show_mode"
     private const val KEY_SUPPRESSED_TASKS = "suppressed_tasks"
+    private const val KEY_ALARM_TIMEOUT_MINUTES = "alarm_timeout_minutes"
+    const val DEFAULT_ALARM_TIMEOUT_MINUTES = 2
     const val DEFAULT_SNOOZE_MINUTES = 10
 
     private fun prefs(context: Context) =
@@ -37,6 +39,12 @@ object AppSettings {
 
     fun clearSuppressedTasks(context: Context) =
         prefs(context).edit().remove(KEY_SUPPRESSED_TASKS).apply()
+
+    fun getAlarmTimeoutMinutes(context: Context): Int =
+        prefs(context).getInt(KEY_ALARM_TIMEOUT_MINUTES, DEFAULT_ALARM_TIMEOUT_MINUTES)
+
+    fun setAlarmTimeoutMinutes(context: Context, minutes: Int) =
+        prefs(context).edit().putInt(KEY_ALARM_TIMEOUT_MINUTES, minutes).apply()
 
     fun isReminderSound(context: Context): Boolean =
         prefs(context).getBoolean("reminder_sound", true)

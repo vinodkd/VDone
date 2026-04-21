@@ -33,11 +33,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.content.Intent
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.vdone.AppSettings
 import com.vdone.VDoneApp
 import com.vdone.data.db.TaskEntity
 import com.vdone.ui.theme.VDoneTheme
@@ -48,6 +50,17 @@ import java.util.Date
 import java.util.Locale
 
 class ReminderActivity : ComponentActivity() {
+
+    // Activity-level state so onNewIntent can update what the composable displays
+    private val currentTaskId = mutableStateOf("")
+    private val currentTaskTitle = mutableStateOf("Task due")
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        currentTaskId.value = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_ID) ?: return
+        currentTaskTitle.value = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_TITLE) ?: "Task due"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,12 +77,8 @@ class ReminderActivity : ComponentActivity() {
             )
         }
 
-        val taskId = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_ID) ?: run { finish(); return }
-        val taskTitle = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_TITLE) ?: "Task due"
-
-        // Cancel the accompanying notification so it doesn't linger in the shade
-        val notifId = taskId.hashCode().and(0x7FFFFFFF)
-        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(notifId)
+        currentTaskId.value = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_ID) ?: run { finish(); return }
+        currentTaskTitle.value = intent.getStringExtra(AlarmScheduler.EXTRA_TASK_TITLE) ?: "Task due"
 
         val app = application as VDoneApp
         val repository = app.taskRepository
@@ -81,13 +90,32 @@ class ReminderActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.errorContainer,
                 ) {
+                    // Read from activity-level state so onNewIntent updates drive recomposition
+                    val taskId = currentTaskId.value
+                    val taskTitle = currentTaskTitle.value
+
+                    // Cancel notification for this task whenever taskId changes
+                    LaunchedEffect(taskId) {
+                        val notifId = taskId.hashCode().and(0x7FFFFFFF)
+                        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(notifId)
+                    }
+
                     var nextTasks by remember { mutableStateOf<List<TaskEntity>>(emptyList()) }
                     var alarmingTask by remember { mutableStateOf<TaskEntity?>(null) }
 
-                    LaunchedEffect(Unit) {
+                    LaunchedEffect(taskId) {
                         alarmingTask = repository.getTaskById(taskId)
                         nextTasks = repository.getAllTasks().first()
                             .filter { it.status == "todo" && it.id != taskId }
+                    }
+
+                    // Auto-dismiss after the configured timeout so subsequent alarms can surface.
+                    // Re-keyed on taskId so the countdown resets when a new alarm arrives.
+                    LaunchedEffect(taskId) {
+                        val timeoutMs = AppSettings.getAlarmTimeoutMinutes(this@ReminderActivity) * 60_000L
+                        kotlinx.coroutines.delay(timeoutMs)
+                        ReminderService.dismiss(this@ReminderActivity)
+                        finish()
                     }
 
                     Column(

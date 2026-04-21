@@ -2,6 +2,14 @@
 
 ---
 
+## v1.0.31 — Alarm timeout and multi-alarm fix
+
+- **Alarm auto-dismiss**: full-screen alarm now closes automatically after a configurable timeout (default 2 min), making way for subsequent alarms in a series. Set in Settings → "Alarm auto-dismiss". Warning shown if timeout is ≤ snooze duration.
+- **Multiple alarms no longer stack**: only one alarm screen can exist at a time; a new alarm replaces the current one and resets the timeout countdown
+- **Audio no longer orphaned**: switching alarms stops the previous audio before starting the new one
+
+---
+
 ## v1.0.30 — Show Mode no longer silently drops alarms
 
 - Alarms that fire while Show Mode is active are now queued; turning Show Mode off reschedules them immediately so nothing is missed

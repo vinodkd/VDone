@@ -108,6 +108,10 @@ class ReminderService : Service() {
     }
 
     private fun startAudio(soundUri: String?) {
+        // Stop any currently playing audio before starting new (prevents orphaned players)
+        mediaPlayer?.runCatching { stop(); release() }
+        mediaPlayer = null
+
         val uri = soundUri?.let { android.net.Uri.parse(it) }
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         mediaPlayer = MediaPlayer().apply {

@@ -54,6 +54,7 @@ fun SettingsScreen(onBack: () -> Unit) {
     var reminderSound by remember { mutableStateOf(AppSettings.isReminderSound(context)) }
     var reminderVibrate by remember { mutableStateOf(AppSettings.isReminderVibrate(context)) }
     var showMode by remember { mutableStateOf(AppSettings.isShowMode(context)) }
+    var alarmTimeout by remember { mutableStateOf(AppSettings.getAlarmTimeoutMinutes(context)) }
 
     Scaffold(
         topBar = {
@@ -156,6 +157,52 @@ fun SettingsScreen(onBack: () -> Unit) {
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
+            }
+
+            HorizontalDivider()
+
+            // Alarm timeout
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Alarm auto-dismiss", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "Full-screen alarm closes automatically after this time",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                if (alarmTimeout > 1) {
+                                    alarmTimeout--
+                                    AppSettings.setAlarmTimeoutMinutes(context, alarmTimeout)
+                                }
+                            }
+                        ) { Text("−", style = MaterialTheme.typography.titleMedium) }
+                        Text(
+                            "${alarmTimeout} min",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = androidx.compose.ui.Modifier.padding(horizontal = 4.dp),
+                        )
+                        IconButton(
+                            onClick = {
+                                alarmTimeout++
+                                AppSettings.setAlarmTimeoutMinutes(context, alarmTimeout)
+                            }
+                        ) { Text("+", style = MaterialTheme.typography.titleMedium) }
+                    }
+                }
+                Text(
+                    "⚠ If this is shorter than or equal to your snooze duration, alarms can cycle without requiring action.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
 
             HorizontalDivider()
