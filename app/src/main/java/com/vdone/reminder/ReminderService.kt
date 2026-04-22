@@ -35,6 +35,11 @@ class ReminderService : Service() {
                 stop()
                 return START_NOT_STICKY
             }
+            ACTION_MUTE -> {
+                // Power/lock button pressed — silence audio but keep notification alive.
+                stopAudio()
+                return START_NOT_STICKY
+            }
         }
 
         val taskId    = intent?.getStringExtra(EXTRA_TASK_ID)    ?: run { stopSelf(); return START_NOT_STICKY }
@@ -139,9 +144,13 @@ class ReminderService : Service() {
         }
     }
 
-    private fun stop() {
+    private fun stopAudio() {
         mediaPlayer?.runCatching { stop(); release() }
         mediaPlayer = null
+    }
+
+    private fun stop() {
+        stopAudio()
         wakeLock?.runCatching { if (isHeld) release() }
         wakeLock = null
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -162,6 +171,7 @@ class ReminderService : Service() {
         const val EXTRA_SOUND_URI  = "sound_uri"
         const val ACTION_DISMISS   = "com.vdone.ALARM_DISMISS"
         const val ACTION_SNOOZE    = "com.vdone.ALARM_SNOOZE"
+        const val ACTION_MUTE      = "com.vdone.ALARM_MUTE"
 
         fun start(context: Context, taskId: String, taskTitle: String, soundUri: String? = null) {
             context.startForegroundService(
@@ -182,6 +192,12 @@ class ReminderService : Service() {
         fun snooze(context: Context) {
             context.startService(
                 Intent(context, ReminderService::class.java).setAction(ACTION_SNOOZE)
+            )
+        }
+
+        fun mute(context: Context) {
+            context.startService(
+                Intent(context, ReminderService::class.java).setAction(ACTION_MUTE)
             )
         }
     }

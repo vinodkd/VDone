@@ -55,6 +55,13 @@ class ReminderActivity : ComponentActivity() {
     private val currentTaskId = mutableStateOf("")
     private val currentTaskTitle = mutableStateOf("Task due")
 
+    override fun onStop() {
+        super.onStop()
+        // Silence audio when screen turns off (power/lock button) or user leaves.
+        // Notification and service remain alive; tapping the notification resumes the alarm screen.
+        ReminderService.mute(this)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
