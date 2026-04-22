@@ -75,17 +75,20 @@ class HomeViewModel(
 
         val dueFreq = td.freqTasks.filter { task ->
             task.isActive &&
+                (task.snoozedUntil == null || task.snoozedUntil <= now) &&
                 FrequencyChecker.isDueToday(task) &&
                 (task.frequencyTime == null || minuteOfDay >= task.frequencyTime) &&
                 ConditionEvaluator.areAllMet(conditionsByTask[task.id].orEmpty(), taskMap, now)
         }
         val dueFixed = td.fixedTasks.filter { task ->
             task.isActive &&
+                (task.snoozedUntil == null || task.snoozedUntil <= now) &&
                 task.fixedStart != null && task.fixedStart <= endOfToday &&
                 ConditionEvaluator.areAllMet(conditionsByTask[task.id].orEmpty(), taskMap, now)
         }
         val dueConditional = td.allTasks.filter { task ->
             task.isActive &&
+                (task.snoozedUntil == null || task.snoozedUntil <= now) &&
                 task.scheduleMode == "condition" &&
                 task.status != "done" &&
                 task.parentId == null &&
