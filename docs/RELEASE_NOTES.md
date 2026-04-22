@@ -2,6 +2,28 @@
 
 ---
 
+## v1.0.37 — Mute alarm with lock button
+
+- Pressing the power/lock button while an alarm is sounding now silences the audio immediately
+- The notification and alarm screen remain visible — tap the notification to return and dismiss or snooze as normal
+
+---
+
+## v1.0.36 — Periwinkle icon rebrand
+
+- Launcher icon updated to periwinkle blue — square icon on the home screen, proper circle on launchers that use round icons
+- Notification icon replaced with a clean white checkmark (was the system alarm clock)
+
+---
+
+## v1.0.35 — Plan tab cleanup
+
+- Plan tab no longer shows done styling (strikethrough, greyed cards) — it shows task definitions, not status
+- Filter chips (All / Todo / Done) removed from Plan tab
+- Mark-done button removed from the task edit screen
+
+---
+
 ## v1.0.34 — 5-tab redesign + Started state
 
 - **New tab structure**: **Plan · Start · Doing · Waiting · Done** — every tab is an action verb
