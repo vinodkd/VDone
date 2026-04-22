@@ -117,6 +117,10 @@ class TaskListViewModel(
         viewModelScope.launch { repository.toggleStatus(task) }
     }
 
+    fun toggleActive(task: TaskEntity) {
+        viewModelScope.launch { repository.toggleActive(task) }
+    }
+
     fun deleteTask(task: TaskEntity) {
         viewModelScope.launch { repository.deleteTask(task) }
     }

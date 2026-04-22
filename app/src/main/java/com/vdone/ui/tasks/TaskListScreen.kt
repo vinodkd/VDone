@@ -1,6 +1,7 @@
 package com.vdone.ui.tasks
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,13 +18,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -36,7 +37,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -230,6 +233,7 @@ fun TaskListScreen(
                             onToggle = { viewModel.toggleStatus(node.task) },
                             onEdit = { onEditTask(node.task.id) },
                             onDelete = { viewModel.deleteTask(node.task) },
+                            onToggleActive = { viewModel.toggleActive(node.task) },
                             onToggleExpand = { viewModel.toggleExpanded(node.task.id) },
                         )
                     }
@@ -240,12 +244,14 @@ fun TaskListScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TaskCard(
     node: TaskNode,
     onToggle: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onToggleActive: () -> Unit,
     onToggleExpand: () -> Unit,
 ) {
     val task = node.task
@@ -253,13 +259,36 @@ private fun TaskCard(
     val doneToday = task.scheduleMode == "frequency" && isToday(task.lastCompletedAt)
     val now = System.currentTimeMillis()
     val isSnoozed = task.snoozedUntil != null && task.snoozedUntil > now
+    val inactive = !task.isActive
     val indentDp = (node.depth * 20).dp
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete task?") },
+            text = { Text("\"${task.title}\" will be permanently deleted.") },
+            confirmButton = {
+                TextButton(onClick = { showDeleteConfirm = false; onDelete() }) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = indentDp)
-            .clickable(onClick = onEdit),
+            .combinedClickable(
+                onClick = onEdit,
+                onLongClick = { showDeleteConfirm = true },
+            ),
         colors = CardDefaults.cardColors(
             containerColor = when {
                 done || doneToday -> MaterialTheme.colorScheme.surfaceVariant
@@ -306,10 +335,19 @@ private fun TaskCard(
                     text = task.title,
                     style = MaterialTheme.typography.bodyLarge,
                     textDecoration = if (done || doneToday) TextDecoration.LineThrough else null,
-                    color = if (done || doneToday) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface,
+                    color = when {
+                        inactive -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        done || doneToday -> MaterialTheme.colorScheme.onSurfaceVariant
+                        else -> MaterialTheme.colorScheme.onSurface
+                    },
                 )
-                if (doneToday) {
+                if (inactive) {
+                    Text(
+                        "Inactive — use toggle to reactivate",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    )
+                } else if (doneToday) {
                     Text(
                         "Done today",
                         style = MaterialTheme.typography.labelSmall,
@@ -347,14 +385,11 @@ private fun TaskCard(
                 }
             }
 
-            IconButton(onClick = onDelete, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
+            Switch(
+                checked = task.isActive,
+                onCheckedChange = { onToggleActive() },
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
         }
     }
 }

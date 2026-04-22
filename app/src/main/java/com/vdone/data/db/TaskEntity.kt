@@ -21,6 +21,7 @@ data class TaskEntity(
     val waitingOn: String?,       // free text; non-null means this task is an open loop
     val followUpAt: Long?,        // unix ms; when to send a follow-up nudge
     val soundUri: String?,      // ringtone URI for alarm; null = system default alarm
+    val isActive: Boolean = true, // false = deactivated; never alarms or appears in Next Tasks
     val createdAt: Long,
     val updatedAt: Long,
 )

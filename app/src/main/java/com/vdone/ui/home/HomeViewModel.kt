@@ -74,16 +74,19 @@ class HomeViewModel(
         val conditionsByTask = cd.allConditions.groupBy { it.taskId }
 
         val dueFreq = td.freqTasks.filter { task ->
-            FrequencyChecker.isDueToday(task) &&
+            task.isActive &&
+                FrequencyChecker.isDueToday(task) &&
                 (task.frequencyTime == null || minuteOfDay >= task.frequencyTime) &&
                 ConditionEvaluator.areAllMet(conditionsByTask[task.id].orEmpty(), taskMap, now)
         }
         val dueFixed = td.fixedTasks.filter { task ->
-            task.fixedStart != null && task.fixedStart <= endOfToday &&
+            task.isActive &&
+                task.fixedStart != null && task.fixedStart <= endOfToday &&
                 ConditionEvaluator.areAllMet(conditionsByTask[task.id].orEmpty(), taskMap, now)
         }
         val dueConditional = td.allTasks.filter { task ->
-            task.scheduleMode == "condition" &&
+            task.isActive &&
+                task.scheduleMode == "condition" &&
                 task.status != "done" &&
                 task.parentId == null &&
                 ConditionEvaluator.areAllMet(conditionsByTask[task.id].orEmpty(), taskMap, now)
@@ -117,6 +120,12 @@ class HomeViewModel(
     fun skip(task: TaskEntity) {
         viewModelScope.launch {
             repository.skipFrequencyTask(task)
+        }
+    }
+
+    fun deactivate(task: TaskEntity) {
+        viewModelScope.launch {
+            repository.toggleActive(task)
         }
     }
 

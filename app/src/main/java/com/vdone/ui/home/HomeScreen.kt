@@ -16,6 +16,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
@@ -109,6 +111,7 @@ fun HomeScreen(
                         scheduleLabel = scheduleLabels[task.id],
                         onDone = { viewModel.complete(task) },
                         onSkip = { viewModel.skip(task) },
+                        onDeactivate = { viewModel.deactivate(task) },
                         onEdit = { onEditTask(task.id) },
                     )
                 }
@@ -124,6 +127,7 @@ private fun DueTaskCard(
     scheduleLabel: String?,
     onDone: () -> Unit,
     onSkip: () -> Unit,
+    onDeactivate: () -> Unit,
     onEdit: () -> Unit,
 ) {
     val now = System.currentTimeMillis()
@@ -178,8 +182,13 @@ private fun DueTaskCard(
                     )
                 }
             }
+            Switch(
+                checked = task.isActive,
+                onCheckedChange = { onDeactivate() },
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
             Column(
-                modifier = Modifier.padding(start = 12.dp),
+                modifier = Modifier.padding(start = 4.dp),
                 horizontalAlignment = Alignment.End,
             ) {
                 Button(onClick = onDone) {

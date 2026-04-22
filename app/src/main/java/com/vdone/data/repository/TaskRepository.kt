@@ -98,6 +98,7 @@ class TaskRepository(
         val updated = task.copy(updatedAt = System.currentTimeMillis(), snoozedUntil = null)
         dao.update(updated)
         when {
+            !updated.isActive -> AlarmScheduler.cancel(context, task.id)
             updated.scheduleMode == "fixed" && updated.fixedStart != null ->
                 AlarmScheduler.schedule(context, updated)
             updated.scheduleMode == "frequency" && updated.frequencyTime != null ->
@@ -106,6 +107,14 @@ class TaskRepository(
         }
         if (updated.followUpAt != null) AlarmScheduler.scheduleFollowUp(context, updated)
         else AlarmScheduler.cancelFollowUp(context, task.id)
+        DueTasksWidget.refresh(context)
+    }
+
+    suspend fun toggleActive(task: TaskEntity) {
+        val updated = task.copy(isActive = !task.isActive, updatedAt = System.currentTimeMillis())
+        dao.update(updated)
+        if (!updated.isActive) AlarmScheduler.cancel(context, task.id)
+        else updateTask(updated) // re-schedules alarm if appropriate
         DueTasksWidget.refresh(context)
     }
 
