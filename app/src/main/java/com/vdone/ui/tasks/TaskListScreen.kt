@@ -83,6 +83,7 @@ fun TaskListScreen(
     onEditTask: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
     title: String = "Plan",
+    planMode: Boolean = true,
 ) {
     val nodes by viewModel.taskNodesWithRefresh.collectAsState()
     val filterMode by viewModel.filterMode.collectAsState()
@@ -170,31 +171,33 @@ fun TaskListScreen(
                 )
             }
 
-            // Filter chips
-            LazyRow(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                item {
-                    FilterChip(
-                        selected = filterMode == FilterMode.ALL,
-                        onClick = { viewModel.filterMode.value = FilterMode.ALL },
-                        label = { Text("All") },
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = filterMode == FilterMode.TODO,
-                        onClick = { viewModel.filterMode.value = FilterMode.TODO },
-                        label = { Text("Todo") },
-                    )
-                }
-                item {
-                    FilterChip(
-                        selected = filterMode == FilterMode.DONE,
-                        onClick = { viewModel.filterMode.value = FilterMode.DONE },
-                        label = { Text("Done") },
-                    )
+            // Filter chips — hidden in Plan mode (tasks are definitions, not statuses)
+            if (!planMode) {
+                LazyRow(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item {
+                        FilterChip(
+                            selected = filterMode == FilterMode.ALL,
+                            onClick = { viewModel.filterMode.value = FilterMode.ALL },
+                            label = { Text("All") },
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = filterMode == FilterMode.TODO,
+                            onClick = { viewModel.filterMode.value = FilterMode.TODO },
+                            label = { Text("Todo") },
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = filterMode == FilterMode.DONE,
+                            onClick = { viewModel.filterMode.value = FilterMode.DONE },
+                            label = { Text("Done") },
+                        )
+                    }
                 }
             }
 
@@ -236,7 +239,8 @@ fun TaskListScreen(
                             onDelete = { viewModel.deleteTask(node.task) },
                             onToggleActive = { viewModel.toggleActive(node.task) },
                             onToggleExpand = { viewModel.toggleExpanded(node.task.id) },
-                            showStatusToggle = false,
+                            showStatusToggle = !planMode,
+                            planMode = planMode,
                         )
                     }
                     item { }
@@ -256,10 +260,11 @@ private fun TaskCard(
     onToggleActive: () -> Unit,
     onToggleExpand: () -> Unit,
     showStatusToggle: Boolean = true,
+    planMode: Boolean = false,
 ) {
     val task = node.task
-    val done = task.status == "done"
-    val doneToday = task.scheduleMode == "frequency" && isToday(task.lastCompletedAt)
+    val done = !planMode && task.status == "done"
+    val doneToday = !planMode && task.scheduleMode == "frequency" && isToday(task.lastCompletedAt)
     val now = System.currentTimeMillis()
     val isSnoozed = task.snoozedUntil != null && task.snoozedUntil > now
     val inactive = !task.isActive

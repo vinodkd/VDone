@@ -108,13 +108,7 @@ fun TaskDetailScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                actions = {
-                    if (!uiState.isNew) {
-                        IconButton(onClick = { viewModel.markDone() }) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = "Mark done")
-                        }
-                    }
-                },
+                actions = { },
             )
         },
         floatingActionButton = {
