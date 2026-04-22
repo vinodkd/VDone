@@ -122,6 +122,17 @@ Combines the tab structure overhaul with the "doing" status. Do after M14.
 - ~~**Defer to task**~~: shipped in v1.0.18 — alarm screen shows current tasks to defer behind, plus "Other task at HH:MM" placeholder.
 - **Snooze UX revisit**: replace fixed-duration snooze buttons with a "remind me in X" input (user-specified duration or time). Currently 5/10/15 min hardcoded on the alarm screen.
 - **HomeViewModel tick optimization**: replace `while(true)/delay(60s)` with a `tickerFlow` combined via `SharingStarted.WhileSubscribed` so it only ticks while the home screen is visible.
+## M18 — First-run tour / onboarding
+
+The 5-tab structure and icon-based actions (▶ start, ↻ skip) are not self-evident to new users. A lightweight tour should explain the core model before they hit any real tasks.
+
+- **What to cover**: the 5 tabs and their purpose (Plan = define, Next = act, Doing = in progress, Waiting = blocked, Done = today's wins); the Start/Skip icons on Next cards; long-press to delete in Plan.
+- **Trigger**: shown once on first launch (flag in SharedPrefs); re-accessible from Settings.
+- **Format**: overlay coach marks (highlight + tooltip per element) or a simple swipeable intro card sequence — whichever is less intrusive.
+- **Scope**: Android only for now; iOS gets its own tour when the iOS app is built.
+
+---
+
 - iOS app
 - Cloud sync / backup
 - Natural-language task entry ("remind me to call dentist tomorrow at 9am")

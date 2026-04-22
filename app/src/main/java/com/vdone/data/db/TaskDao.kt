@@ -40,8 +40,19 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE scheduleMode = 'frequency' AND parentId IS NULL ORDER BY createdAt ASC")
     fun getFrequencyTasks(): Flow<List<TaskEntity>>
 
-    @Query("SELECT * FROM tasks WHERE scheduleMode = 'fixed' AND status != 'done' AND parentId IS NULL ORDER BY fixedStart ASC")
+    @Query("SELECT * FROM tasks WHERE scheduleMode = 'fixed' AND status != 'done' AND status != 'doing' AND parentId IS NULL ORDER BY fixedStart ASC")
     fun getFixedTasks(): Flow<List<TaskEntity>>
+
+    @Query("SELECT * FROM tasks WHERE status = 'doing' ORDER BY startedAt ASC")
+    fun getDoingTasks(): Flow<List<TaskEntity>>
+
+    @Query("""
+        SELECT * FROM tasks
+        WHERE (status = 'done' AND updatedAt >= :startOfDay)
+           OR (scheduleMode = 'frequency' AND lastCompletedAt IS NOT NULL AND lastCompletedAt >= :startOfDay)
+        ORDER BY updatedAt DESC
+    """)
+    fun getDoneTasksToday(startOfDay: Long): Flow<List<TaskEntity>>
 
     @Query("""
         SELECT * FROM tasks

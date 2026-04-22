@@ -8,6 +8,7 @@ import com.vdone.reminder.AlarmScheduler
 import com.vdone.scheduler.ConditionEvaluator
 import com.vdone.widget.DueTasksWidget
 import kotlinx.coroutines.flow.Flow
+import java.util.Calendar
 import java.util.UUID
 
 class TaskRepository(
@@ -21,6 +22,18 @@ class TaskRepository(
     fun getFrequencyTasks(): Flow<List<TaskEntity>> = dao.getFrequencyTasks()
 
     fun getFixedTasks(): Flow<List<TaskEntity>> = dao.getFixedTasks()
+
+    fun getDoingTasks(): Flow<List<TaskEntity>> = dao.getDoingTasks()
+
+    fun getDoneTasksToday(): Flow<List<TaskEntity>> {
+        val startOfDay = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        return dao.getDoneTasksToday(startOfDay)
+    }
 
     fun getWaitingTasks(): Flow<List<TaskEntity>> = dao.getWaitingTasks()
 
@@ -144,6 +157,37 @@ class TaskRepository(
     suspend fun clearWaiting(task: TaskEntity) {
         dao.update(task.copy(waitingOn = null, followUpAt = null, updatedAt = System.currentTimeMillis()))
         AlarmScheduler.cancelFollowUp(context, task.id)
+    }
+
+    suspend fun startTask(task: TaskEntity) {
+        val now = System.currentTimeMillis()
+        dao.update(task.copy(status = "doing", startedAt = now, snoozedUntil = null, updatedAt = now))
+        AlarmScheduler.cancel(context, task.id)
+        DueTasksWidget.refresh(context)
+    }
+
+    suspend fun autoDoneOvernight() {
+        val startOfToday = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val now = System.currentTimeMillis()
+        val overnight = dao.getAllTasksOnce().filter {
+            it.status == "doing" && (it.startedAt ?: Long.MAX_VALUE) < startOfToday
+        }
+        if (overnight.isEmpty()) return
+        for (task in overnight) {
+            if (task.scheduleMode == "frequency") {
+                dao.update(task.copy(status = "todo", lastCompletedAt = now, autoDone = true, updatedAt = now))
+                if (task.frequencyTime != null) AlarmScheduler.scheduleFrequency(context, task)
+            } else {
+                dao.update(task.copy(status = "done", autoDone = true, updatedAt = now))
+            }
+            scheduleUnblockedTasks(task.id, now)
+        }
+        DueTasksWidget.refresh(context)
     }
 
     suspend fun completeFrequencyTask(task: TaskEntity) {

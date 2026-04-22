@@ -14,8 +14,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import com.vdone.ui.theme.VDoneTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -43,6 +45,12 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val repo = (application as VDoneApp).taskRepository
+        lifecycleScope.launch { repo.autoDoneOvernight() }
     }
 
     override fun onNewIntent(intent: Intent) {

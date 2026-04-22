@@ -2,8 +2,10 @@ package com.vdone
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -26,6 +28,10 @@ import com.vdone.data.repository.ConditionRepository
 import com.vdone.data.repository.TaskRepository
 import com.vdone.ui.detail.TaskDetailScreen
 import com.vdone.ui.detail.TaskDetailViewModel
+import com.vdone.ui.doing.DoingScreen
+import com.vdone.ui.doing.DoingViewModel
+import com.vdone.ui.done.DoneScreen
+import com.vdone.ui.done.DoneViewModel
 import com.vdone.ui.home.HomeScreen
 import com.vdone.ui.home.HomeViewModel
 import com.vdone.ui.loops.OpenLoopsScreen
@@ -35,6 +41,7 @@ import com.vdone.ui.tasks.TaskListScreen
 import com.vdone.ui.tasks.TaskListViewModel
 
 private const val NEW = "new"
+private val TAB_ROUTES = setOf("plan", "next", "doing", "waiting", "done")
 
 @Composable
 fun VDoneNavHost(
@@ -51,41 +58,65 @@ fun VDoneNavHost(
     val currentEntry by rootNav.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
 
-    val showBottomBar = currentRoute == "home" || currentRoute == "tasks" || currentRoute == "loops"
+    val showBottomBar = currentRoute in TAB_ROUTES
 
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
                     NavigationBarItem(
-                        selected = currentRoute == "home",
+                        selected = currentRoute == "plan",
                         onClick = {
-                            rootNav.navigate("home") {
-                                popUpTo("home") { inclusive = true }
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                        label = { Text("Next") },
-                    )
-                    NavigationBarItem(
-                        selected = currentRoute == "tasks",
-                        onClick = {
-                            rootNav.navigate("tasks") {
-                                popUpTo("home")
+                            rootNav.navigate("plan") {
+                                popUpTo("next") { inclusive = false }
+                                launchSingleTop = true
                             }
                         },
                         icon = { Icon(Icons.Default.List, contentDescription = null) },
-                        label = { Text("All Tasks") },
+                        label = { Text("Plan") },
                     )
                     NavigationBarItem(
-                        selected = currentRoute == "loops",
+                        selected = currentRoute == "next",
                         onClick = {
-                            rootNav.navigate("loops") {
-                                popUpTo("home")
+                            rootNav.navigate("next") {
+                                popUpTo("next") { inclusive = true }
+                            }
+                        },
+                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                        label = { Text("Start") },
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == "doing",
+                        onClick = {
+                            rootNav.navigate("doing") {
+                                popUpTo("next") { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        },
+                        icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
+                        label = { Text("Doing") },
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == "waiting",
+                        onClick = {
+                            rootNav.navigate("waiting") {
+                                popUpTo("next") { inclusive = false }
+                                launchSingleTop = true
                             }
                         },
                         icon = { Icon(Icons.Default.Refresh, contentDescription = null) },
-                        label = { Text("Loops") },
+                        label = { Text("Waiting") },
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == "done",
+                        onClick = {
+                            rootNav.navigate("done") {
+                                popUpTo("next") { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        },
+                        icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
+                        label = { Text("Done") },
                     )
                 }
             }
@@ -93,10 +124,21 @@ fun VDoneNavHost(
     ) { innerPadding ->
         NavHost(
             navController = rootNav,
-            startDestination = "home",
+            startDestination = "next",
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable("home") {
+            composable("plan") {
+                val vm: TaskListViewModel = viewModel(factory = TaskListViewModel.Factory(repository, conditionRepository))
+                TaskListScreen(
+                    viewModel = vm,
+                    onAddTask = { rootNav.navigate("detail/$NEW") },
+                    onEditTask = { id -> rootNav.navigate("detail/$id") },
+                    onNavigateToSettings = { rootNav.navigate("settings") },
+                    title = "Plan",
+                )
+            }
+
+            composable("next") {
                 val vm: HomeViewModel = viewModel(
                     factory = HomeViewModel.Factory(repository, conditionRepository)
                 )
@@ -108,19 +150,27 @@ fun VDoneNavHost(
                 )
             }
 
-            composable("tasks") {
-                val vm: TaskListViewModel = viewModel(factory = TaskListViewModel.Factory(repository, conditionRepository))
-                TaskListScreen(
+            composable("doing") {
+                val vm: DoingViewModel = viewModel(factory = DoingViewModel.Factory(repository))
+                DoingScreen(
                     viewModel = vm,
-                    onAddTask = { rootNav.navigate("detail/$NEW") },
                     onEditTask = { id -> rootNav.navigate("detail/$id") },
                     onNavigateToSettings = { rootNav.navigate("settings") },
                 )
             }
 
-            composable("loops") {
+            composable("waiting") {
                 val vm: OpenLoopsViewModel = viewModel(factory = OpenLoopsViewModel.Factory(repository))
                 OpenLoopsScreen(
+                    viewModel = vm,
+                    onEditTask = { id -> rootNav.navigate("detail/$id") },
+                    onNavigateToSettings = { rootNav.navigate("settings") },
+                )
+            }
+
+            composable("done") {
+                val vm: DoneViewModel = viewModel(factory = DoneViewModel.Factory(repository))
+                DoneScreen(
                     viewModel = vm,
                     onEditTask = { id -> rootNav.navigate("detail/$id") },
                     onNavigateToSettings = { rootNav.navigate("settings") },

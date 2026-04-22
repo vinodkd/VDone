@@ -75,6 +75,7 @@ class HomeViewModel(
 
         val dueFreq = td.freqTasks.filter { task ->
             task.isActive &&
+                task.status != "doing" &&
                 (task.snoozedUntil == null || task.snoozedUntil <= now) &&
                 FrequencyChecker.isDueToday(task) &&
                 (task.frequencyTime == null || minuteOfDay >= task.frequencyTime) &&
@@ -88,6 +89,7 @@ class HomeViewModel(
         }
         val dueConditional = td.allTasks.filter { task ->
             task.isActive &&
+                task.status != "doing" &&
                 (task.snoozedUntil == null || task.snoozedUntil <= now) &&
                 task.scheduleMode == "condition" &&
                 task.status != "done" &&
@@ -109,6 +111,10 @@ class HomeViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     fun refresh() { refreshTick.value++ }
+
+    fun start(task: TaskEntity) {
+        viewModelScope.launch { repository.startTask(task) }
+    }
 
     fun complete(task: TaskEntity) {
         viewModelScope.launch {

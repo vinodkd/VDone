@@ -4,23 +4,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.RotateRight
 import androidx.compose.material3.Card
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -65,7 +61,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Next Tasks") },
+                title = { Text("Start") },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
@@ -109,9 +105,8 @@ fun HomeScreen(
                     DueTaskCard(
                         task = task,
                         scheduleLabel = scheduleLabels[task.id],
-                        onDone = { viewModel.complete(task) },
+                        onStart = { viewModel.start(task) },
                         onSkip = { viewModel.skip(task) },
-                        onDeactivate = { viewModel.deactivate(task) },
                         onEdit = { onEditTask(task.id) },
                     )
                 }
@@ -125,9 +120,8 @@ fun HomeScreen(
 private fun DueTaskCard(
     task: TaskEntity,
     scheduleLabel: String?,
-    onDone: () -> Unit,
+    onStart: () -> Unit,
     onSkip: () -> Unit,
-    onDeactivate: () -> Unit,
     onEdit: () -> Unit,
 ) {
     val now = System.currentTimeMillis()
@@ -146,7 +140,7 @@ private fun DueTaskCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -182,29 +176,16 @@ private fun DueTaskCard(
                     )
                 }
             }
-            Switch(
-                checked = task.isActive,
-                onCheckedChange = { onDeactivate() },
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
-            Column(
-                modifier = Modifier.padding(start = 4.dp),
-                horizontalAlignment = Alignment.End,
-            ) {
-                Button(onClick = onDone) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(16.dp)
-                            .padding(end = 2.dp),
-                    )
-                    Text("Done")
+            // Fixed width so all cards' action columns align regardless of title length
+            Row(modifier = Modifier.width(88.dp), horizontalArrangement = Arrangement.Start) {
+                IconButton(onClick = onStart, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Start",
+                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                 }
                 if (task.scheduleMode == "frequency") {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    OutlinedButton(onClick = onSkip) {
-                        Text("Skip")
+                    IconButton(onClick = onSkip, modifier = Modifier.size(40.dp)) {
+                        Icon(Icons.Default.RotateRight, contentDescription = "Skip",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
                     }
                 }
             }

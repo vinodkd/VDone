@@ -82,6 +82,7 @@ fun TaskListScreen(
     onAddTask: () -> Unit,
     onEditTask: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
+    title: String = "Plan",
 ) {
     val nodes by viewModel.taskNodesWithRefresh.collectAsState()
     val filterMode by viewModel.filterMode.collectAsState()
@@ -93,7 +94,7 @@ fun TaskListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tasks") },
+                title = { Text(title) },
                 actions = {
                     IconButton(onClick = {
                         searchActive = !searchActive
@@ -235,6 +236,7 @@ fun TaskListScreen(
                             onDelete = { viewModel.deleteTask(node.task) },
                             onToggleActive = { viewModel.toggleActive(node.task) },
                             onToggleExpand = { viewModel.toggleExpanded(node.task.id) },
+                            showStatusToggle = false,
                         )
                     }
                     item { }
@@ -253,6 +255,7 @@ private fun TaskCard(
     onDelete: () -> Unit,
     onToggleActive: () -> Unit,
     onToggleExpand: () -> Unit,
+    showStatusToggle: Boolean = true,
 ) {
     val task = node.task
     val done = task.status == "done"
@@ -316,14 +319,18 @@ private fun TaskCard(
                 Box(modifier = Modifier.width(40.dp))
             }
 
-            IconButton(onClick = onToggle, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    imageVector = if (done || doneToday) Icons.Filled.CheckCircle
-                    else Icons.Filled.RadioButtonUnchecked,
-                    contentDescription = if (done || doneToday) "Mark todo" else "Mark done",
-                    tint = if (done || doneToday) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            if (showStatusToggle) {
+                IconButton(onClick = onToggle, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        imageVector = if (done || doneToday) Icons.Filled.CheckCircle
+                        else Icons.Filled.RadioButtonUnchecked,
+                        contentDescription = if (done || doneToday) "Mark todo" else "Mark done",
+                        tint = if (done || doneToday) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                Box(modifier = Modifier.width(40.dp))
             }
 
             Column(
