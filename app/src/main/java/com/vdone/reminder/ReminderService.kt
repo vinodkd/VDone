@@ -78,7 +78,7 @@ class ReminderService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this, channel)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setSmallIcon(com.vdone.R.drawable.ic_notification)
             .setContentTitle("Task due")
             .setContentText(taskTitle)
             .setContentIntent(contentPi)

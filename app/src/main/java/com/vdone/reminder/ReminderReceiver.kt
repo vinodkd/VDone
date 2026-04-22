@@ -38,7 +38,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             val notification = NotificationCompat.Builder(context, channel)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setSmallIcon(com.vdone.R.drawable.ic_notification)
                 .setContentTitle("Follow-up reminder")
                 .setContentText(
                     if (!waitingOn.isNullOrBlank()) "$taskTitle — waiting on $waitingOn"
