@@ -11,6 +11,7 @@ Future milestones and ideas, roughly in priority order.
 - ~~**Skip only on alarm screen**~~: fixed in v1.0.27 — Skip button now appears on recurring task cards in Next Tasks.
 - ~~**Rebrand to periwinkle blue**~~: shipped in v1.0.25 — app theme and website updated.
 - **App icon rebrand**: launcher icon and notification icon still use the old green/teal. Needs new icon assets in periwinkle blue.
+- **Website screenshots**: `docs/screenshots/` still shows the old 3-tab UI. Retake Start, Plan, Doing, Waiting, Done tabs and full-screen alarm after v1.0.34 is on device.
 - ~~**Conditional alarms never fire proactively**~~: fixed in v1.0.29 — alarm is scheduled immediately when the blocking task is marked done.
 - ~~**Show mode silently drops alarms**~~: fixed in v1.0.30 — suppressed alarms are queued and rescheduled immediately when Show Mode is turned off.
 
