@@ -2,6 +2,26 @@
 
 ---
 
+## v1.0.34 — 5-tab redesign + Started state
+
+- **New tab structure**: **Plan · Start · Doing · Waiting · Done** — every tab is an action verb
+- **Plan tab** — task definitions only; no status toggle; long-press to delete; toggle to deactivate
+- **Start tab** (was Next Tasks) — shows tasks due today + overdue; ▶ to start a task, ↻ to skip a recurring occurrence
+- **Doing tab** — tasks currently in progress; tap Done when finished
+- **Done tab** — today's completions (recurring and one-off); auto-completed overnight tasks shown with "Auto-completed" label
+- **Deactivate tasks** — toggle a task inactive from Plan; it disappears from Start and stops alarming; reactivate with the same toggle
+- **Auto-done** — tasks left in Doing overnight are automatically completed when you next open the app
+- Snoozed tasks are now correctly hidden from Start until the snooze expires
+
+---
+
+## v1.0.32 — Deactivate and long-press delete
+
+- **Deactivate** — toggle switch on every task row in the task list; inactive tasks show faded text and an "Inactive" label; deactivated tasks never appear in Next Tasks or fire alarms
+- **Long-press to delete** — removes the dedicated delete icon; long-pressing a task card shows a confirmation dialog instead
+
+---
+
 ## v1.0.31 — Alarm timeout and multi-alarm fix
 
 - **Alarm auto-dismiss**: full-screen alarm now closes automatically after a configurable timeout (default 2 min), making way for subsequent alarms in a series. Set in Settings → "Alarm auto-dismiss". Warning shown if timeout is ≤ snooze duration.

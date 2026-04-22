@@ -42,15 +42,12 @@ Future milestones and ideas, roughly in priority order.
 
 ---
 
-## M14 — Pre-redesign improvements (independent of tab structure)
+## ~~M14 — Pre-redesign improvements~~ (done, v1.0.32–33)
 
-These items from the original M14 stand on their own and should be done before the full 5-tab redesign (M17):
-
-- **Filter Next Tasks to today + overdue**: remove future-dated tasks from Next Tasks; label overdue items distinctly. Resolves the confusing "tomorrow's task appearing in Next Tasks" issue.
-- **Deactivate flag**: add `isActive: Boolean` to `TaskEntity` (DB migration); deactivated tasks never appear in Next Tasks or fire alarms. Ban icon on every task row and in the edit screen, uniform across all task types.
-- **Multi-select delete**: long-press on a task row enters selection mode — checkboxes appear, toolbar shows a delete action for all selected; back or deselect-all exits. Delete moves to long-press (no dedicated delete icon on rows in normal mode).
-
-Tab renames and "remove done-checkbox from All Tasks" are deferred to M17 to avoid doing them twice.
+- ~~**Filter Next Tasks to today + overdue**~~: snoozed tasks hidden; `fixedStart <= endOfToday` already filtered future fixed tasks.
+- ~~**Deactivate flag**~~: toggle switch on task rows; DB migration 12→13; inactive tasks excluded from Start and alarms.
+- ~~**Long-press to delete**~~: replaces dedicated delete icon; confirmation dialog on long-press.
+- **Multi-select delete**: deferred — long-press now triggers delete confirm. If multi-select lands, it will move delete to the toolbar.
 
 ---
 
@@ -84,27 +81,15 @@ Currently the lower-level time units are either implicit (weekly fires on the sa
 
 ---
 
-## M17 — 5-tab redesign + Started state
+## ~~M17 — 5-tab redesign + Started state~~ (done, v1.0.34)
 
-Combines the tab structure overhaul with the "doing" status. Do after M14.
-
-**Tab structure**: replace current 3 tabs (Next Tasks / All Tasks / Loops) with:
-**Plan** · **Next** · **Doing** · **Waiting** · **Done**
-- **Plan**: all tasks including future-dated; replaces All Tasks. No mark-done here — task definitions only.
-- **Next**: today + overdue tasks. Done/Skip/Start actions on cards.
-- **Doing**: tasks currently in progress. Done action only (no Skip).
-- **Waiting**: replaces Loops tab — tasks with a "waiting on" field.
-- **Done**: today's completions only (both explicit and auto-done).
-
-**"Started" / doing status**:
-- New status value `"doing"`. New DB fields: `startedAt: Long?`, `autoDone: Boolean`.
-- **Start**: cancels alarm, moves task to Doing tab. Entry points: alarm screen (alongside Snooze/Done) and Next Tasks card (alongside Done/Skip).
-- **While doing**: suppress any re-alarm silently.
-- **Auto-complete at EOD**: on `Activity.onResume`, check for `status == "doing"` where `startedAt < today's midnight`; mark `autoDone = true`, status = `"done"`, advance recurring schedule, trigger unblocked conditional tasks. No background job needed — fires before UI renders.
-- **Conditions / defer**: wait for `"done"` (including auto-done), not `"doing"`.
-- `startedAt` preserved on auto-done for duration/procrastination tracking later.
-
-**DB change**: add `startedAt: Long?` and `autoDone: Boolean` to `TaskEntity`; migration needed (combine with any other pending migrations at build time).
+- ~~5 tabs: Plan · Start · Doing · Waiting · Done~~
+- ~~`status = "doing"`, `startedAt`, `autoDone` fields (DB migration 13→14)~~
+- ~~Start tab: ▶ start + ↻ skip icons; fixed-width action column for alignment~~
+- ~~Doing tab: in-progress tasks; Done button~~
+- ~~Done tab: today's completions via `updatedAt` / `lastCompletedAt`~~
+- ~~Auto-done on `onResume`: overnight "doing" tasks completed automatically~~
+- ~~Plan tab: no status toggle; task definitions only~~
 
 ---
 

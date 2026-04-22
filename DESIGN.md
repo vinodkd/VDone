@@ -24,7 +24,7 @@ iOS is a future milestone. Two native codebases are justified because unignorabl
 | id | TEXT (UUID) | Primary key |
 | title | TEXT | Required |
 | notes | TEXT | Optional |
-| status | TEXT | `todo` \| `done` |
+| status | TEXT | `todo` \| `doing` \| `done` |
 | parentId | TEXT | FK → tasks.id; null for root tasks |
 | scheduleMode | TEXT | `none` \| `fixed` \| `frequency` \| `condition` |
 | frequency | TEXT | `daily` \| `weekly` \| `monthly` \| `yearly`; null unless scheduleMode=frequency |
@@ -36,6 +36,10 @@ iOS is a future milestone. Two native codebases are justified because unignorabl
 | snoozedUntil | INTEGER | Unix ms; set when snoozed, cleared when alarm re-fires |
 | waitingOn | TEXT | Free text; non-null marks this task as an open loop |
 | followUpAt | INTEGER | Unix ms follow-up alarm for open loop tasks |
+| soundUri | TEXT | Ringtone URI for alarm; null = system default alarm sound |
+| isActive | INTEGER | Boolean; 0 = deactivated — never alarms or appears in Start tab |
+| startedAt | INTEGER | Unix ms; set when status moves to `doing` |
+| autoDone | INTEGER | Boolean; 1 if completed by overnight auto-done rather than explicit action |
 | createdAt | INTEGER | Unix ms |
 | updatedAt | INTEGER | Unix ms |
 
@@ -76,11 +80,13 @@ app/src/main/java/com/vdone/
     DueTasksWidgetReceiver  # GlanceAppWidgetReceiver — manifest entry point
     DueTasksWidgetWorker    # CoroutineWorker — refreshes widget every 15 min
   ui/
-    home/      # Next Tasks tab
-    tasks/     # All Tasks tab (filter / sort / search / tree)
-    loops/     # Loops tab (open loops)
+    home/      # Start tab — due today + overdue; ▶ start, ↻ skip
+    tasks/     # Plan tab — full task tree; filter / sort / search
+    doing/     # Doing tab — in-progress tasks
+    done/      # Done tab — today's completions
+    loops/     # Waiting tab — open loops (waiting on someone)
     detail/    # Create / edit task
-    settings/  # Sound, vibrate, show mode, permissions
+    settings/  # Sound, vibrate, show mode, alarm timeout, permissions
     theme/     # Material3 colour scheme and typography
   AppSettings.kt   # SharedPreferences wrapper
   VDoneApp.kt      # Application: DB init, notification channels, alarm rescheduling
@@ -141,7 +147,9 @@ WorkManager (15-min tick) ──────────────────
 
 4. **AND-only condition logic** — OR semantics deferred to future. The schema supports it without migration.
 
-5. **Frequency tasks never "done"** — Frequency tasks always have `status = "todo"`. "Done today" is derived from `lastCompletedAt` being today, not from `status`. `ConditionEvaluator` applies the same logic for `after_task_done`.
+5. **Frequency tasks never "done"** — Frequency tasks always have `status = "todo"` (or `"doing"` while in progress). "Done today" is derived from `lastCompletedAt` being today, not from `status`. `ConditionEvaluator` applies the same logic for `after_task_done`.
+
+8. **`doing` status and auto-done** — Starting a task moves it to `status = "doing"` and cancels its alarm. On `MainActivity.onResume`, any "doing" task whose `startedAt` is before today's midnight is auto-completed (`autoDone = true`). This fires before the UI renders with no background job required. Conditions wait for `"done"`, not `"doing"`.
 
 6. **Sound/vibrate are global** — Four notification channels cover all combinations; the active channel is selected at alarm fire time.
 
