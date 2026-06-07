@@ -99,7 +99,7 @@ class VDoneApp : Application() {
                 if (fireAt > now) AlarmScheduler.schedule(this@VDoneApp, task)
             }
             taskRepository.getFrequencyTasks().first().forEach { task ->
-                if (task.frequencyTime != null && task.status != "done") {
+                if (task.frequencyTime != null && task.isActive) {
                     AlarmScheduler.scheduleFrequency(this@VDoneApp, task)
                 }
             }

@@ -223,14 +223,16 @@ class ReminderActivity : ComponentActivity() {
                                     )
                                     val task = repository.getTaskById(taskId)
                                     if (task != null) {
-                                        repository.updateTask(
-                                            task.copy(scheduleMode = "condition")
-                                        )
-                                        conditionRepository.addCondition(
-                                            taskId = taskId,
-                                            type = "after_task_done",
-                                            refTaskId = newTaskId,
-                                        )
+                                        if (task.scheduleMode == "frequency") {
+                                            repository.skipFrequencyTask(task)
+                                        } else {
+                                            repository.updateTask(task.copy(scheduleMode = "condition"))
+                                            conditionRepository.addCondition(
+                                                taskId = taskId,
+                                                type = "after_task_done",
+                                                refTaskId = newTaskId,
+                                            )
+                                        }
                                     }
                                     ReminderService.dismiss(this@ReminderActivity)
                                     finish()
@@ -257,14 +259,16 @@ class ReminderActivity : ComponentActivity() {
                                                 lifecycleScope.launch {
                                                     val task = repository.getTaskById(taskId)
                                                     if (task != null) {
-                                                        repository.updateTask(
-                                                            task.copy(scheduleMode = "condition")
-                                                        )
-                                                        conditionRepository.addCondition(
-                                                            taskId = taskId,
-                                                            type = "after_task_done",
-                                                            refTaskId = blockingTask.id,
-                                                        )
+                                                        if (task.scheduleMode == "frequency") {
+                                                            repository.skipFrequencyTask(task)
+                                                        } else {
+                                                            repository.updateTask(task.copy(scheduleMode = "condition"))
+                                                            conditionRepository.addCondition(
+                                                                taskId = taskId,
+                                                                type = "after_task_done",
+                                                                refTaskId = blockingTask.id,
+                                                            )
+                                                        }
                                                     }
                                                     ReminderService.dismiss(this@ReminderActivity)
                                                     finish()

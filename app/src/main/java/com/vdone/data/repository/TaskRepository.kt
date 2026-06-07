@@ -132,6 +132,10 @@ class TaskRepository(
     }
 
     suspend fun toggleStatus(task: TaskEntity) {
+        if (task.scheduleMode == "frequency") {
+            completeFrequencyTask(task)
+            return
+        }
         val now = System.currentTimeMillis()
         val newStatus = if (task.status == "done") "todo" else "done"
         dao.update(task.copy(status = newStatus, updatedAt = now))
